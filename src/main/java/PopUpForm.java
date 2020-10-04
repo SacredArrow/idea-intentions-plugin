@@ -8,7 +8,7 @@ import java.awt.event.ItemListener;
 import java.util.HashMap;
 
 public class PopUpForm extends JFrame {
-    private final HashMap<String, IntentionAction> intentionsMap = new HashMap<>();
+    private final HashMap<String, IntentionAction> intentionsMap = new HashMap<>(); // Used for getting action from string (change to some existing method later?)
     private JComboBox<String> comboBox;
     private JTextField textField;
     private JPanel panel1;
@@ -31,9 +31,6 @@ public class PopUpForm extends JFrame {
         comboBox.setEditable(true);
         refreshList(false);
 
-        //
-        // Create an ActionListener for the JComboBox component.
-        //
         comboBox.addActionListener(event -> {
             //
             // Get the source of the component, which is our combo
@@ -42,7 +39,7 @@ public class PopUpForm extends JFrame {
             JComboBox comboBox = (JComboBox) event.getSource();
 
             Object selected = comboBox.getSelectedItem();
-            if (selected == null) { // Checkbox event
+            if (selected == null) { // Ignore checkbox event
                 return;
             }
             boolean isAvailable = PluginRunAction.Companion.checkSelectedIntention(intentionsMap.get(selected.toString()));
@@ -58,6 +55,7 @@ public class PopUpForm extends JFrame {
     private void refreshList(boolean onlyAvailable) {
         comboBox.removeAllItems();
         for (IntentionAction action : new IntentionManagerImpl().getAvailableIntentionActions()) {
+            // Add all or only available actions
             if (!onlyAvailable || PluginRunAction.Companion.checkSelectedIntention(action)) {
                 comboBox.addItem(action.getFamilyName());
                 intentionsMap.put(action.getFamilyName(), action);

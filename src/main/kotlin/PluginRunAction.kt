@@ -24,20 +24,15 @@ class PluginRunAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         editor = e.getData(PlatformDataKeys.EDITOR)
         project = e.getData(PlatformDataKeys.PROJECT)
-        println(editor)
-        println(project)
+//        println(editor)
+//        println(project)
         file = e.getData(LangDataKeys.PSI_FILE)
-        println(file)
+//        println(file)
 //        val element : PsiElement? = e.getData(LangDataKeys.PSI_ELEMENT)
 //        println(element)
 //        val element2 : PsiElement? = file?.findElementAt(editor.caretModel.offset)
 //        println(element2)
 
-//        println(IntentionManagerImpl().availableIntentionActions.size)
-//        for (action in IntentionManagerImpl().availableIntentionActions) {
-//            println(action.familyName)
-//            println(checkSelectedIntention(action))
-//        }
         PopUpForm()
 
 
