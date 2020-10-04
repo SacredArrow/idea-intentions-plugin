@@ -1,5 +1,4 @@
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys

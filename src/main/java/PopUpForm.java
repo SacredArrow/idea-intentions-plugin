@@ -4,7 +4,6 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.HashMap;
 
 public class PopUpForm extends JFrame {
