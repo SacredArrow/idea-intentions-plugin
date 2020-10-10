@@ -13,7 +13,8 @@ class SequentialApplier {
 
     // Explanation of the following function: https://jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html
     private fun runWriteCommandAndCommit(command: () -> Unit) {
-        WriteCommandAction.runWriteCommandAction(project) { command()
+        WriteCommandAction.runWriteCommandAction(project) {
+            command()
             PsiDocumentManager.getInstance(project!!).commitDocument(document)
         }
     }
@@ -22,7 +23,6 @@ class SequentialApplier {
         val actions = IntentionHandler.getIntentionsList(true)
 
         val oldCode = document.text
-        if (actions.isEmpty()) return
 
         for (action in actions) {
             val intentionName = IntentionHandler.getIntentionActionByName(action)
@@ -32,17 +32,17 @@ class SequentialApplier {
             events.add(event)
             if (event.hash_start !in hashes.keys) hashes[event.hash_start] = oldCode
             if (event.hash_end in hashes) {
-                continue
+                continue // Returned to previous state
             } else {
                 hashes[event.hash_end] = newCode
                 start()
-                runWriteCommandAndCommit { document.setText(oldCode) } // Replace code entirely with previous one
+                runWriteCommandAndCommit { document.setText(oldCode) } // After recursive call replace code with old one
 
             }
         }
     }
 
-    fun dumpHashMap() {
+    fun dumpHashMap() { // Write our map to file
         File("/home/custos/Projects/Diploma/map.txt").printWriter().use { out ->
             hashes.forEach {
                 out.println("${it.key}, ${it.value}")

@@ -42,9 +42,8 @@ public class PopUpForm extends JFrame {
         applySequenceButton.addActionListener(event -> {
             SequentialApplier applier = new SequentialApplier();
 
-            applier.start();
+            applier.start(); // Build intentions tree
             applier.dumpHashMap();
-//            System.out.println(applier.getEvents());
             new IntentionListToDot().process(applier.getEvents());
         });
         setContentPane(this.panel1);
