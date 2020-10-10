@@ -43,7 +43,9 @@ public class PopUpForm extends JFrame {
             SequentialApplier applier = new SequentialApplier();
 
             applier.start();
-            System.out.println(applier.getEvents());
+            applier.dumpHashMap();
+//            System.out.println(applier.getEvents());
+            new IntentionListToDot().process(applier.getEvents());
         });
         setContentPane(this.panel1);
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
