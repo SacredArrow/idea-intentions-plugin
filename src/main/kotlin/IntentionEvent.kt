@@ -1,0 +1,1 @@
+data class IntentionEvent (var name: String, var hash_start: Int, var hash_end: Int)

@@ -10,29 +10,17 @@ import com.intellij.psi.PsiFile
 
 
 class PluginRunAction : AnAction() {
-    // Caret is in only one place at the moment of plugin start
-    companion object {
-        var project: Project? = null
-        var editor: Editor? = null
-        var file: PsiFile? = null
-
-        fun checkSelectedIntention(selected: IntentionAction) : Boolean {
-            return selected.isAvailable(project!!, editor, file)
-        }
-    }
     override fun actionPerformed(e: AnActionEvent) {
-        editor = e.getData(PlatformDataKeys.EDITOR)
-        project = e.getData(PlatformDataKeys.PROJECT)
-//        println(editor)
-//        println(project)
-        file = e.getData(LangDataKeys.PSI_FILE)
+        IntentionHandler.editor = e.getData(PlatformDataKeys.EDITOR)
+        IntentionHandler.project = e.getData(PlatformDataKeys.PROJECT)
+        IntentionHandler.file = e.getData(LangDataKeys.PSI_FILE)
 //        println(file)
 //        val element : PsiElement? = e.getData(LangDataKeys.PSI_ELEMENT)
 //        println(element)
 //        val element2 : PsiElement? = file?.findElementAt(editor.caretModel.offset)
 //        println(element2)
 
-        PopUpForm()
+        PopUpForm().initialize()
 
 
     }

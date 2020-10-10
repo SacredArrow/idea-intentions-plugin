@@ -1,23 +1,16 @@
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
-import java.util.HashMap;
 
 public class PopUpForm extends JFrame {
-    private final HashMap<String, IntentionAction> intentionsMap = new HashMap<>(); // Used for getting action from string (change to some existing method later?)
     private JComboBox<String> comboBox;
     private JTextField textField;
     private JPanel panel1;
     private JCheckBox checkBox1;
+    private JButton applySequenceButton;
 
-    public PopUpForm() {
-        initialize();
-    }
 
-    private void initialize() {
+    public void initialize() {
         setSize(300, 300);
         setLayout(new FlowLayout(FlowLayout.LEFT));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -41,9 +34,16 @@ public class PopUpForm extends JFrame {
             if (selected == null) { // Ignore checkbox event
                 return;
             }
-            boolean isAvailable = PluginRunAction.Companion.checkSelectedIntention(intentionsMap.get(selected.toString()));
+            boolean isAvailable = IntentionHandler.Companion.checkSelectedIntentionByName(selected.toString());
             textField.setText(String.valueOf(isAvailable));
 
+        });
+
+        applySequenceButton.addActionListener(event -> {
+            SequentialApplier applier = new SequentialApplier();
+
+            applier.start();
+            System.out.println(applier.getEvents());
         });
         setContentPane(this.panel1);
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -53,13 +53,8 @@ public class PopUpForm extends JFrame {
 
     private void refreshList(boolean onlyAvailable) {
         comboBox.removeAllItems();
-        for (IntentionAction action : new IntentionManagerImpl().getAvailableIntentionActions()) {
-            // Add all or only available actions
-            if (!onlyAvailable || PluginRunAction.Companion.checkSelectedIntention(action)) {
-                comboBox.addItem(action.getFamilyName());
-                intentionsMap.put(action.getFamilyName(), action);
-
-            }
+        for (String actionName : IntentionHandler.Companion.getIntentionsList(onlyAvailable)) {
+            comboBox.addItem(actionName);
         }
     }
 
