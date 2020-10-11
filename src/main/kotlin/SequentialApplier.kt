@@ -10,12 +10,13 @@ class SequentialApplier {
     var events = mutableListOf<IntentionEvent>()
     private var hashes = HashMap<Int, String>()
     private val document = editor!!.document // Is it okay to put it here?
+    private val docManager = PsiDocumentManager.getInstance(project!!)
 
     // Explanation of the following function: https://jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html
     private fun runWriteCommandAndCommit(command: () -> Unit) {
         WriteCommandAction.runWriteCommandAction(project) {
             command()
-            PsiDocumentManager.getInstance(project!!).commitDocument(document)
+            docManager.commitDocument(document)
         }
     }
 
