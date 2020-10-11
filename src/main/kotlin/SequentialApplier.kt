@@ -26,8 +26,8 @@ class SequentialApplier {
         val oldCode = document.text
 
         for (action in actions) {
-            val intentionName = IntentionHandler.getIntentionActionByName(action)
-            runWriteCommandAndCommit { intentionName.invoke(project!!, editor, file) }
+            val intention = IntentionHandler.getIntentionActionByName(action)
+            runWriteCommandAndCommit { intention.invoke(project!!, editor, file) }
             val newCode = document.text
             val event = IntentionEvent(action, oldCode.hashCode(), newCode.hashCode())
             events.add(event)
