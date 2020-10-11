@@ -32,14 +32,11 @@ class SequentialApplier {
             val event = IntentionEvent(action, oldCode.hashCode(), newCode.hashCode())
             events.add(event)
             if (event.hash_start !in hashes.keys) hashes[event.hash_start] = oldCode
-            if (event.hash_end in hashes) {
-                continue // Returned to previous state
-            } else {
+            if (event.hash_end !in hashes) {
                 hashes[event.hash_end] = newCode
                 start()
-                runWriteCommandAndCommit { document.setText(oldCode) } // After recursive call replace code with old one
-
             }
+            runWriteCommandAndCommit { document.setText(oldCode) } // Rplace code with old one
         }
     }
 
