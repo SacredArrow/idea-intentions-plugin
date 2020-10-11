@@ -27,16 +27,18 @@ class SequentialApplier {
 
         for (action in actions) {
             val intention = IntentionHandler.getIntentionActionByName(action)
+//            println(document.text)
             runWriteCommandAndCommit { intention.invoke(project!!, editor, file) }
             val newCode = document.text
             val event = IntentionEvent(action, oldCode.hashCode(), newCode.hashCode())
             events.add(event)
+            println(event)
             if (event.hash_start !in hashes.keys) hashes[event.hash_start] = oldCode
-            if (event.hash_end !in hashes) {
+            if (event.hash_end !in hashes.keys) {
                 hashes[event.hash_end] = newCode
                 start()
             }
-            runWriteCommandAndCommit { document.setText(oldCode) } // Rplace code with old one
+            runWriteCommandAndCommit { document.setText(oldCode) } // Replace code with old one
         }
     }
 
