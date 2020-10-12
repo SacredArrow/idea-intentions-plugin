@@ -16,7 +16,7 @@ class SequentialApplier {
     private fun runWriteCommandAndCommit(command: () -> Unit) {
         WriteCommandAction.runWriteCommandAction(project) {
             command()
-            docManager.commitDocument(document)
+            docManager.commitDocument(document) // There is difference with commitAllDocuments
         }
     }
 

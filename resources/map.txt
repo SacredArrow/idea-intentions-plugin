@@ -1,0 +1,104 @@
+-792215418, public class Test {
+    public void test() {
+        String prefix;
+        prefix = 2 >= hash.length() ? "xx" : hash.substring(0, 2);
+        Boolean b = hash.length() < hash.length();
+    }
+}
+-127327765, public class Test {
+    public void test() {
+        String prefix;
+        prefix = !(hash.length() > 2) ? "xx" : hash.substring(0, 2);
+        Boolean b = hash.length() < hash.length();
+    }
+}
+637334590, public class Test {
+    public void test() {
+        String prefix;
+        prefix = hash.length() <= 2 ? "xx" : hash.substring(0, 2);
+        Boolean b = hash.length() < hash.length();
+    }
+}
+92766884, public class Test {
+    public void test() {
+        String prefix;
+        prefix = !(2 >= hash.length()) ? hash.substring(0, 2) : "xx";
+        Boolean b = hash.length() < hash.length();
+    }
+}
+2043383085, public class Test {
+    public void test() {
+        String prefix;
+        prefix = !(2 < hash.length()) ? "xx" : hash.substring(0, 2);
+        Boolean b = hash.length() < hash.length();
+    }
+}
+-257625757, public class Test {
+    public void test() {
+        String prefix = !(2 >= hash.length()) ? hash.substring(0, 2) : "xx";
+        Boolean b = hash.length() < hash.length();
+    }
+}
+2000729930, public class Test {
+    public void test() {
+        String prefix = 2 < hash.length() ? hash.substring(0, 2) : "xx";
+        Boolean b = hash.length() < hash.length();
+    }
+}
+-1671523636, public class Test {
+    public void test() {
+        String prefix = hash.length() > 2 ? hash.substring(0, 2) : "xx";
+        Boolean b = hash.length() < hash.length();
+    }
+}
+1054347531, public class Test {
+    public void test() {
+        String prefix;
+        prefix = 2 < hash.length() ? hash.substring(0, 2) : "xx";
+        Boolean b = hash.length() < hash.length();
+    }
+}
+-1519132121, public class Test {
+    public void test() {
+        String prefix = 2 >= hash.length() ? "xx" : hash.substring(0, 2);
+        Boolean b = hash.length() < hash.length();
+    }
+}
+1459144172, public class Test {
+    public void test() {
+        String prefix;
+        prefix = !(hash.length() <= 2) ? hash.substring(0, 2) : "xx";
+        Boolean b = hash.length() < hash.length();
+    }
+}
+-89582113, public class Test {
+    public void test() {
+        String prefix = hash.length() <= 2 ? "xx" : hash.substring(0, 2);
+        Boolean b = hash.length() < hash.length();
+    }
+}
+1677061261, public class Test {
+    public void test() {
+        String prefix;
+        prefix = hash.length() > 2 ? hash.substring(0, 2) : "xx";
+        Boolean b = hash.length() < hash.length();
+    }
+}
+-738866546, public class Test {
+    public void test() {
+        String prefix = !(2 < hash.length()) ? "xx" : hash.substring(0, 2);
+        Boolean b = hash.length() < hash.length();
+    }
+}
+1108751531, public class Test {
+    public void test() {
+        String prefix = !(hash.length() <= 2) ? hash.substring(0, 2) : "xx";
+        Boolean b = hash.length() < hash.length();
+    }
+}
+1385389900, public class Test {
+    public void test() {
+        String prefix = !(hash.length() > 2) ? "xx" : hash.substring(0, 2);
+        Boolean b = hash.length() < hash.length();
+    }
+}
