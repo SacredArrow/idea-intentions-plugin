@@ -1,12 +1,7 @@
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 
 
 class PluginRunAction : AnAction() {
@@ -14,6 +9,7 @@ class PluginRunAction : AnAction() {
         IntentionHandler.editor = e.getData(PlatformDataKeys.EDITOR)
         IntentionHandler.project = e.getData(PlatformDataKeys.PROJECT)
         IntentionHandler.file = e.getData(LangDataKeys.PSI_FILE)
+        IntentionHandler.out_path = System.getenv()["OUT_PATH"]
 //        println(file)
 //        val element : PsiElement? = e.getData(LangDataKeys.PSI_ELEMENT)
 //        println(element)

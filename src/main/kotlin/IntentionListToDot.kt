@@ -1,7 +1,7 @@
 import java.io.File
 
-class IntentionListToDot {
-    fun process(events: List<IntentionEvent>) {
+object IntentionListToDot {
+    fun process(events: List<IntentionEvent>, filename: String) {
         val builder = StringBuilder()
         builder.append("digraph G {\n")
         for (event in events) {
@@ -9,6 +9,11 @@ class IntentionListToDot {
         }
         builder.append("}")
         println(builder.toString())
-        File("/home/custos/Projects/Diploma/out.dot").writeText(builder.toString())
+        val file = File("${IntentionHandler.out_path}/dots/${filename}.dot")
+        if (!file.parentFile.exists())
+            file.parentFile.mkdirs();
+        if (!file.exists())
+            file.createNewFile();
+        file.writeText(builder.toString())
     }
 }
