@@ -42,12 +42,6 @@ class SequentialApplier {
                 println("Encountered intention not from IntentionActionWrapper")
                 continue
             }
-            if (document.text != oldState.code) {
-                println("Code doesn't match")
-                println(document.text)
-                println(oldState.code)
-                return
-            }
 //            println(intention.isAvailable(project!!, editor, file))
             runWriteCommandAndCommit { intention.invoke(project!!, editor, file) }
             val newCode = document.text
