@@ -8,6 +8,7 @@ public class PopUpForm extends JFrame {
     private JPanel panel1;
     private JCheckBox checkBox1;
     private JButton applySequenceButton;
+    private JButton applyToFileButton;
 
 
     public void initialize() {
@@ -43,8 +44,13 @@ public class PopUpForm extends JFrame {
             SequentialApplier applier = new SequentialApplier();
 
             applier.start(); // Build intentions tree
-            applier.dumpHashMap();
-            new IntentionListToDot().process(applier.getEvents());
+            applier.dumpHashMap("out");
+            IntentionListToDot.INSTANCE.process(applier.getEvents(), "out");
+        });
+
+        applyToFileButton.addActionListener(event -> {
+            FileApplier applier = new FileApplier();
+            applier.start();
         });
         setContentPane(this.panel1);
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
