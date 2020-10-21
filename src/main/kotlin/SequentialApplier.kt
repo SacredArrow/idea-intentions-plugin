@@ -30,6 +30,8 @@ class SequentialApplier {
 
         for (actionName in actions) {
             val intention = IntentionHandler.getIntentionActionByName(actionName)
+
+            // Attempt to throw away "bad" intentions
             if (actionName == "Change access modifier" || actionName == "Implement abstract class or interface") {
                 continue
             }
@@ -42,8 +44,13 @@ class SequentialApplier {
                 println("Encountered intention not from IntentionActionWrapper")
                 continue
             }
-//            println(intention.isAvailable(project!!, editor, file))
-            runWriteCommandAndCommit { intention.invoke(project!!, editor, file) }
+
+            intention.isAvailable(project!!, editor, file)
+            
+            runWriteCommandAndCommit {
+                intention.isAvailable(project!!, editor, file)
+                intention.invoke(project!!, editor, file) 
+            }
             val newCode = document.text
             val event = IntentionEvent(actionName, oldState.code.hashCode(), newCode.hashCode())
             events.add(event)
