@@ -2,6 +2,7 @@ import IntentionHandler.Companion.editor
 import IntentionHandler.Companion.file
 import IntentionHandler.Companion.project
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiDocumentManager
 import java.io.File
@@ -32,24 +33,15 @@ class SequentialApplier {
             val intention = IntentionHandler.getIntentionActionByName(actionName)
 
             // Attempt to throw away "bad" intentions
-            if (actionName == "Change access modifier" || actionName == "Implement abstract class or interface") {
+            if (!intention.startInWriteAction() && actionName != "Introduce local variable") { // What's wrong with local variable?
+                println("Skipping $actionName")
                 continue
             }
-            if (intention is IntentionActionWrapper) { // Temporary solution
-                if (intention.delegate::class.qualifiedName!! in intention.delegate.toString()) {
-                    println("$actionName is suspicious, skipping")
-                    continue
-                }
-            } else {
-                println("Encountered intention not from IntentionActionWrapper")
-                continue
-            }
+            if (actionName == "Convert number") continue
 
-            intention.isAvailable(project!!, editor, file)
-            
             runWriteCommandAndCommit {
                 intention.isAvailable(project!!, editor, file)
-                intention.invoke(project!!, editor, file) 
+                intention.invoke(project!!, editor, file)
             }
             val newCode = document.text
             val event = IntentionEvent(actionName, oldState.code.hashCode(), newCode.hashCode())
