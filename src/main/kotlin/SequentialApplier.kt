@@ -1,8 +1,4 @@
-import IntentionHandler.Companion.editor
-import IntentionHandler.Companion.file
-import IntentionHandler.Companion.project
-import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import GlobalStorage.out_path
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.serialization.*
@@ -11,34 +7,34 @@ import kotlinx.serialization.json.Json
 
 data class CodeState(var code: String, var offset: Int)
 
-class SequentialApplier() {
+class SequentialApplier(private val handler: CurrentFileHandler) {
     var events = mutableListOf<IntentionEvent>()
     private var hashes = HashMap<Int, String>()
-    private val document = editor!!.document // Is it okay to put it here?
-    private val docManager = PsiDocumentManager.getInstance(project!!)
-    private val caret = editor!!.caretModel
+    private val document = handler.editor.document // Is it okay to put it here?
+    private val docManager = PsiDocumentManager.getInstance(handler.project)
+    private val caret = handler.editor.caretModel
     private var setOfSemanticsChangingIntentions: Set<String> = emptySet() // TODO Should it be moved outside of the class?
 
     init {
-        val file = File(IntentionHandler.out_path + "/badIntentions.json")
+        val file = File("$out_path/badIntentions.json")
         setOfSemanticsChangingIntentions = Json.decodeFromString(file.readText())
     }
 
     // Explanation of the following function: https://jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html
     private fun runWriteCommandAndCommit(command: () -> Unit) {
-        WriteCommandAction.runWriteCommandAction(project) {
+        WriteCommandAction.runWriteCommandAction(handler.project) {
             command()
             docManager.commitDocument(document) // There is difference with commitAllDocuments
         }
     }
 
     fun start() {
-        val actions = IntentionHandler.getIntentionsList(true)
+        val actions = handler.getIntentionsList(true)
 
         val oldState = CodeState(document.text, caret.offset)
 
         for (actionName in actions) {
-            val intention = IntentionHandler.getIntentionActionByName(actionName)
+            val intention = handler.getIntentionActionByName(actionName)
 
 //            if (intention is IntentionActionWrapper) {
 //                if ("semantics" in intention.delegate.toString()) {
@@ -53,8 +49,8 @@ class SequentialApplier() {
             if (actionName in setOfSemanticsChangingIntentions) continue
 
             runWriteCommandAndCommit {
-                intention.isAvailable(project!!, editor, file)
-                intention.invoke(project!!, editor, file)
+                intention.isAvailable(handler.project, handler.editor, handler.file)
+                intention.invoke(handler.project, handler.editor, handler.file)
             }
             val newCode = document.text
             val event = IntentionEvent(actionName, oldState.code.hashCode(), newCode.hashCode())
@@ -73,11 +69,11 @@ class SequentialApplier() {
     }
 
     fun dumpHashMap(parentFilename: String, filename: String) { // Write our map to file
-        val file = File("${IntentionHandler.out_path}/maps/$parentFilename/$filename.txt")
+        val file = File("$out_path/maps/$parentFilename/$filename.txt")
         if (!file.parentFile.exists())
-            file.parentFile.mkdirs();
+            file.parentFile.mkdirs()
         if (!file.exists())
-            file.createNewFile();
+            file.createNewFile()
         file.printWriter().use { out ->
             hashes.forEach {
                 out.println("${it.key}, ${it.value}")

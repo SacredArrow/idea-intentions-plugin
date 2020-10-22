@@ -11,7 +11,7 @@ class IntentionListToDot {
             builder.append("${event.hash_start} -> ${event.hash_end} [label=\"${event.name}\"]\n")
         }
         builder.append("}")
-        val file = File("${IntentionHandler.out_path}/dots/$parentFilename/$filename.dot")
+        val file = File("${GlobalStorage.out_path}/dots/$parentFilename/$filename.dot")
         val result = builder.toString()
 
         return if (result.hashCode() in hashes) {
@@ -19,9 +19,9 @@ class IntentionListToDot {
         } else {
             hashes.add(result.hashCode())
             if (!file.parentFile.exists())
-                file.parentFile.mkdirs();
+                file.parentFile.mkdirs()
             if (!file.exists())
-                file.createNewFile();
+                file.createNewFile()
             file.writeText(result)
             true
         }

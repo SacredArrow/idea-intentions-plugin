@@ -1,17 +1,15 @@
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import java.util.*
 
-class IntentionHandler {
-    // Caret is in only one place at the moment of plugin start
-    companion object {
-        var project: Project? = null
-        var editor: Editor? = null
-        var file: PsiFile? = null
-        var out_path: String? = null //TODO remove all paths later since it is only for development
+class CurrentFileHandler(val project: Project, val editor: Editor, val file: PsiFile) {
+        constructor(e: AnActionEvent) : this(e.getData(PlatformDataKeys.PROJECT)!!, e.getData(PlatformDataKeys.EDITOR)!!, e.getData(LangDataKeys.PSI_FILE)!!)
 
         private var intentionsMap = HashMap<String, IntentionAction>() // Used for getting action from string (change to some existing method later?)
 
@@ -35,5 +33,5 @@ class IntentionHandler {
             actions.forEach { intentionsMap[it.familyName] = it }
             return actions.map { it.familyName } // TODO check if this should be changed to getText()
         }
-    }
+
 }
