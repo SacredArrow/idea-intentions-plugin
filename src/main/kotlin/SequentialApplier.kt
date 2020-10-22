@@ -5,16 +5,24 @@ import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiDocumentManager
+import kotlinx.serialization.*
 import java.io.File
+import kotlinx.serialization.json.Json
 
 data class CodeState(var code: String, var offset: Int)
 
-class SequentialApplier {
+class SequentialApplier() {
     var events = mutableListOf<IntentionEvent>()
     private var hashes = HashMap<Int, String>()
     private val document = editor!!.document // Is it okay to put it here?
     private val docManager = PsiDocumentManager.getInstance(project!!)
     private val caret = editor!!.caretModel
+    private var setOfSemanticsChangingIntentions: Set<String> = emptySet() // TODO Should it be moved outside of the class?
+
+    init {
+        val file = File(IntentionHandler.out_path + "/badIntentions.json")
+        setOfSemanticsChangingIntentions = Json.decodeFromString(file.readText())
+    }
 
     // Explanation of the following function: https://jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html
     private fun runWriteCommandAndCommit(command: () -> Unit) {
@@ -32,12 +40,17 @@ class SequentialApplier {
         for (actionName in actions) {
             val intention = IntentionHandler.getIntentionActionByName(actionName)
 
+//            if (intention is IntentionActionWrapper) {
+//                if ("semantics" in intention.delegate.toString()) {
+//                    println("$actionName(${intention.delegate.toString()} changes semantics?")
+//                }
+//            }
             // Attempt to throw away "bad" intentions
             if (!intention.startInWriteAction() && actionName != "Introduce local variable") { // What's wrong with local variable?
                 println("Skipping $actionName")
                 continue
             }
-            if (actionName == "Convert number") continue
+            if (actionName in setOfSemanticsChangingIntentions) continue
 
             runWriteCommandAndCommit {
                 intention.isAvailable(project!!, editor, file)
