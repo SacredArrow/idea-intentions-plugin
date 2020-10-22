@@ -44,8 +44,8 @@ public class PopUpForm extends JFrame {
             SequentialApplier applier = new SequentialApplier();
 
             applier.start(); // Build intentions tree
-            applier.dumpHashMap("out");
-            new IntentionListToDot().process(applier.getEvents(), "out");
+            applier.dumpHashMap("noname", "out");
+            new IntentionListToDot().process(applier.getEvents(), "noname", "out");
         });
 
         applyToFileButton.addActionListener(event -> {

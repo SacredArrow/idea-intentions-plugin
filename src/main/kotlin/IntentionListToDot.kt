@@ -3,7 +3,7 @@ import java.io.File
 class IntentionListToDot {
     private val hashes = HashSet<Int>()
 
-    fun process(events: List<IntentionEvent>, filename: String): Boolean {
+    fun process(events: List<IntentionEvent>, parentFilename: String, filename: String): Boolean {
         if (events.isEmpty()) return false
         val builder = StringBuilder()
         builder.append("digraph G {\n")
@@ -11,7 +11,7 @@ class IntentionListToDot {
             builder.append("${event.hash_start} -> ${event.hash_end} [label=\"${event.name}\"]\n")
         }
         builder.append("}")
-        val file = File("${IntentionHandler.out_path}/dots/${filename}.dot")
+        val file = File("${IntentionHandler.out_path}/dots/$parentFilename/$filename.dot")
         val result = builder.toString()
 
         return if (result.hashCode() in hashes) {

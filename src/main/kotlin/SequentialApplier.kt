@@ -59,8 +59,8 @@ class SequentialApplier {
         }
     }
 
-    fun dumpHashMap(filename: String) { // Write our map to file
-        val file = File("${IntentionHandler.out_path}/maps/$filename.txt")
+    fun dumpHashMap(parentFilename: String, filename: String) { // Write our map to file
+        val file = File("${IntentionHandler.out_path}/maps/$parentFilename/$filename.txt")
         if (!file.parentFile.exists())
             file.parentFile.mkdirs();
         if (!file.exists())
