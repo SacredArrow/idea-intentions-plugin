@@ -6,6 +6,7 @@ class FileApplier {
     private val usedPositions = HashSet<Int>()
     fun start() {
         val file  = IntentionHandler.file!!.copy() // File in editor should be consistent with this one
+        val dotPrinter = IntentionListToDot()
         println(file)
         file!!.accept(object: PsiRecursiveElementWalkingVisitor() {
             override fun visitElement(element: PsiElement) {
@@ -18,8 +19,10 @@ class FileApplier {
                     val applier = SequentialApplier()
                     applier.start()
                     val fileName = "$offset - $element"
-                    applier.dumpHashMap(fileName)
-                    IntentionListToDot.process(applier.events, fileName)
+
+                    if (dotPrinter.process(applier.events, fileName)) {
+                        applier.dumpHashMap(fileName)
+                    }
                 }
                 super.visitElement(element)
             }
