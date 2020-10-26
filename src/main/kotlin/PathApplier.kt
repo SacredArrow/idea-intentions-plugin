@@ -18,9 +18,9 @@ class PathApplier(handler: CurrentPositionHandler) {
     }
     private fun startForFile(path: String) {
         val virtualFile = VirtualFileManager.getInstance().findFileByUrl("file://$path")!!
-        val file = PsiManager.getInstance(project).findFile(virtualFile)
+        val file = PsiManager.getInstance(project).findFile(virtualFile)!!
         println(file)
-        val document = PsiDocumentManager.getInstance(project).getDocument(file!!)
+        val document = PsiDocumentManager.getInstance(project).getDocument(file)
         var editor: Editor? = null
         WriteCommandAction.runWriteCommandAction(project) {
             editor = EditorFactory.getInstance().createEditor(document!!) // Must be invoked in EDT?

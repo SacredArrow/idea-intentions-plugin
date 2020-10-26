@@ -47,7 +47,6 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
 
         for (intention in actions) {
             val actionName = intention.familyName
-            println(actionName)
             if (intention is IntentionActionWrapper) {
                 if ("semantics" in intention.delegate.toString()) { // It doesn't filter all the semantic problems
                     println("$actionName(${intention.delegate} changes semantics?")
