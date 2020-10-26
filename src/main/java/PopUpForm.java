@@ -1,3 +1,6 @@
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
@@ -9,47 +12,41 @@ public class PopUpForm extends JFrame {
     private JCheckBox checkBox1;
     private JButton applySequenceButton;
     private JButton applyToFileButton;
+    private JButton applyToPathButton;
 
 
-    public void initialize() {
+    public void initialize(AnActionEvent e) {
         setSize(300, 300);
         setLayout(new FlowLayout(FlowLayout.LEFT));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        checkBox1.addItemListener(e -> {
-            boolean checked = e.getStateChange() == ItemEvent.SELECTED;
-            refreshList(checked);
+        CurrentPositionHandler handler = new CurrentPositionHandler(e); // Save current editor state etc
+
+        checkBox1.addItemListener(event -> {
+            boolean checked = event.getStateChange() == ItemEvent.SELECTED;
+            refreshList(checked, e);
         });
 
         comboBox.setEditable(true);
-        refreshList(false);
+        refreshList(false, e);
 
-        comboBox.addActionListener(event -> {
-            //
-            // Get the source of the component, which is our combo
-            // box.
-            //
-            JComboBox comboBox = (JComboBox) event.getSource();
-
-            Object selected = comboBox.getSelectedItem();
-            if (selected == null) { // Ignore checkbox event
-                return;
-            }
-            boolean isAvailable = IntentionHandler.Companion.checkSelectedIntentionByName(selected.toString());
-            textField.setText(String.valueOf(isAvailable));
-
+        applyToPathButton.addActionListener(event -> {
+            PathApplier applier = new PathApplier(handler);
+            String path = textField.getText();
+            applier.start(path);
         });
 
         applySequenceButton.addActionListener(event -> {
-            SequentialApplier applier = new SequentialApplier();
+            SequentialApplier applier = new SequentialApplier(handler);
 
-            applier.start(); // Build intentions tree
-            applier.dumpHashMap("out");
-            IntentionListToDot.INSTANCE.process(applier.getEvents(), "out");
+            if (applier.start(0, 20)) { // Build intentions tree
+                applier.dumpHashMap("noname", "out");
+                new IntentionListToDot().process(applier.getEvents(), "noname", "out");
+            }
         });
 
         applyToFileButton.addActionListener(event -> {
-            FileApplier applier = new FileApplier();
+            FileApplier applier = new FileApplier(handler);
             applier.start();
         });
         setContentPane(this.panel1);
@@ -58,10 +55,10 @@ public class PopUpForm extends JFrame {
         this.setVisible(true);
     }
 
-    private void refreshList(boolean onlyAvailable) {
+    private void refreshList(boolean onlyAvailable, AnActionEvent e) {
         comboBox.removeAllItems();
-        for (String actionName : IntentionHandler.Companion.getIntentionsList(onlyAvailable)) {
-            comboBox.addItem(actionName);
+        for (IntentionAction intention : new CurrentPositionHandler(e).getIntentionsList(onlyAvailable)) {
+            comboBox.addItem(intention.getFamilyName());
         }
     }
 
