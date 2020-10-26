@@ -8,30 +8,46 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import java.util.*
 
-class CurrentFileHandler(val project: Project, val editor: Editor, val file: PsiFile) {
-        constructor(e: AnActionEvent) : this(e.getData(PlatformDataKeys.PROJECT)!!, e.getData(PlatformDataKeys.EDITOR)!!, e.getData(LangDataKeys.PSI_FILE)!!)
+class CurrentFileHandler {
+    val project: Project
+    val editor: Editor
+    val file: PsiFile
 
-        private var intentionsMap = HashMap<String, IntentionAction>() // Used for getting action from string (change to some existing method later?)
+    constructor(project: Project, editor: Editor, file: PsiFile) {
+        this.project = project
+        this.editor = editor
+        this.file = file
+    }
+    constructor(e: AnActionEvent)  {
+        val project = e.getData(PlatformDataKeys.PROJECT)!!
+        val editor = e.getData(PlatformDataKeys.EDITOR)!! // If cursor isn't placed, editor and file will be null
+        val file = e.getData(LangDataKeys.PSI_FILE)!!
+        this.project = project
+        this.editor = editor
+        this.file = file
+    }
 
-        fun getIntentionActionByName(name: String) : IntentionAction {
-            return intentionsMap[name]!!
+    private var intentionsMap = HashMap<String, IntentionAction>() // Used for getting action from string (change to some existing method later?)
+
+    fun getIntentionActionByName(name: String) : IntentionAction {
+        return intentionsMap[name]!!
+    }
+
+    fun checkSelectedIntentionByName(selected: String) : Boolean {
+        return checkIntention(getIntentionActionByName(selected))
+    }
+
+    private fun checkIntention(intention: IntentionAction) : Boolean {
+        return intention.isAvailable(project, editor, file)
+    }
+
+    fun getIntentionsList(onlyAvailable: Boolean): List<String> {
+        var actions = IntentionManagerImpl().availableIntentionActions // TODO check difference with IntentionManagerImpl.getInstance()
+        if (onlyAvailable) {
+            actions = actions.filter { checkIntention(it) }.toTypedArray()
         }
-
-        fun checkSelectedIntentionByName(selected: String) : Boolean {
-            return checkIntention(getIntentionActionByName(selected))
-        }
-
-        private fun checkIntention(intention: IntentionAction) : Boolean {
-            return intention.isAvailable(project!!, editor, file)
-        }
-
-        fun getIntentionsList(onlyAvailable: Boolean): List<String> {
-            var actions = IntentionManagerImpl().availableIntentionActions // TODO check difference with IntentionManagerImpl.getInstance()
-            if (onlyAvailable) {
-                actions = actions.filter { checkIntention(it) }.toTypedArray()
-            }
-            actions.forEach { intentionsMap[it.familyName] = it }
-            return actions.map { it.familyName } // TODO check if this should be changed to getText()
-        }
+        actions.forEach { intentionsMap[it.familyName] = it }
+        return actions.map { it.familyName } // TODO check if this should be changed to getText()
+    }
 
 }

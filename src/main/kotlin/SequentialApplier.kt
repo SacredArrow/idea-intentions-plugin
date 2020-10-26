@@ -1,4 +1,5 @@
 import GlobalStorage.out_path
+import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.serialization.*
@@ -24,6 +25,8 @@ class SequentialApplier(private val handler: CurrentFileHandler) {
     private fun runWriteCommandAndCommit(command: () -> Unit) {
         WriteCommandAction.runWriteCommandAction(handler.project) {
             command()
+        }
+        WriteCommandAction.runWriteCommandAction(handler.project) { // This WriteAction isn't really necessary?
             docManager.commitDocument(document) // There is difference with commitAllDocuments
         }
     }
@@ -36,18 +39,26 @@ class SequentialApplier(private val handler: CurrentFileHandler) {
         for (actionName in actions) {
             val intention = handler.getIntentionActionByName(actionName)
 
-//            if (intention is IntentionActionWrapper) {
-//                if ("semantics" in intention.delegate.toString()) {
-//                    println("$actionName(${intention.delegate.toString()} changes semantics?")
-//                }
-//            }
+            if (intention is IntentionActionWrapper) {
+                if ("semantics" in intention.delegate.toString()) { // It doesn't filter all the semantic problems
+                    println("$actionName(${intention.delegate} changes semantics?")
+                    continue
+                }
+            }
             // Attempt to throw away "bad" intentions
-            if (!intention.startInWriteAction() && actionName != "Introduce local variable") { // What's wrong with local variable?
+            // "Introduce local variable" sometimes is OK, sometimes breaks everything
+            if (!intention.startInWriteAction()) { // What's wrong with local variable?
                 println("Skipping $actionName")
                 continue
             }
-            if (actionName in setOfSemanticsChangingIntentions) continue
 
+            /*
+            This also drops "Convert number" (opens pop-up),  "Replace with block comment" (otherwise
+            it becomes endless loop of adding spaces in the end),
+             "Cast expression" (endless loop with "Create Local Var from instanceof Usage"),
+             "Break string on '\n'"(loop)
+             */
+            if (setOfSemanticsChangingIntentions.contains(actionName)) continue
             runWriteCommandAndCommit {
                 intention.isAvailable(handler.project, handler.editor, handler.file)
                 intention.invoke(handler.project, handler.editor, handler.file)

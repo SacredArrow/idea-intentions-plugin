@@ -1,3 +1,5 @@
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
@@ -10,10 +12,13 @@ class PathApplier(handler: CurrentFileHandler) {
         val file = PsiManager.getInstance(project).findFile(virtualFile)
         println(file)
         val document = PsiDocumentManager.getInstance(project).getDocument(file!!)
-        val editor = EditorFactory.getInstance().createEditor(document!!) // Must be invoked in EDT?
+        var editor: Editor? = null
+        WriteCommandAction.runWriteCommandAction(project) {
+            editor = EditorFactory.getInstance().createEditor(document!!) // Must be invoked in EDT?
+        }
         println(editor)
         println(document)
-        val handler = CurrentFileHandler(project, editor, file)
+        val handler = CurrentFileHandler(project, editor!!, file)
         val applier = FileApplier(handler)
         applier.start()
 
