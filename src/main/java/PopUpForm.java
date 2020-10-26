@@ -1,3 +1,4 @@
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 import javax.swing.*;
@@ -19,7 +20,7 @@ public class PopUpForm extends JFrame {
         setLayout(new FlowLayout(FlowLayout.LEFT));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        CurrentFileHandler handler = new CurrentFileHandler(e); // Save current editor state etc
+        CurrentPositionHandler handler = new CurrentPositionHandler(e); // Save current editor state etc
 
         checkBox1.addItemListener(event -> {
             boolean checked = event.getStateChange() == ItemEvent.SELECTED;
@@ -38,9 +39,10 @@ public class PopUpForm extends JFrame {
         applySequenceButton.addActionListener(event -> {
             SequentialApplier applier = new SequentialApplier(handler);
 
-            applier.start(); // Build intentions tree
-            applier.dumpHashMap("noname", "out");
-            new IntentionListToDot().process(applier.getEvents(), "noname", "out");
+            if (applier.start(0, 20)) { // Build intentions tree
+                applier.dumpHashMap("noname", "out");
+                new IntentionListToDot().process(applier.getEvents(), "noname", "out");
+            }
         });
 
         applyToFileButton.addActionListener(event -> {
@@ -55,8 +57,8 @@ public class PopUpForm extends JFrame {
 
     private void refreshList(boolean onlyAvailable, AnActionEvent e) {
         comboBox.removeAllItems();
-        for (String actionName : new CurrentFileHandler(e).getIntentionsList(onlyAvailable)) {
-            comboBox.addItem(actionName);
+        for (IntentionAction intention : new CurrentPositionHandler(e).getIntentionsList(onlyAvailable)) {
+            comboBox.addItem(intention.getFamilyName());
         }
     }
 

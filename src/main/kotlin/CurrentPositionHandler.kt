@@ -8,10 +8,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import java.util.*
 
-class CurrentFileHandler {
+class CurrentPositionHandler {
     val project: Project
     val editor: Editor
     val file: PsiFile
+    var actions: Array<IntentionAction> = IntentionManagerImpl().availableIntentionActions // TODO check difference with IntentionManagerImpl.getInstance()
 
     constructor(project: Project, editor: Editor, file: PsiFile) {
         this.project = project
@@ -27,27 +28,12 @@ class CurrentFileHandler {
         this.file = file
     }
 
-    private var intentionsMap = HashMap<String, IntentionAction>() // Used for getting action from string (change to some existing method later?)
-
-    fun getIntentionActionByName(name: String) : IntentionAction {
-        return intentionsMap[name]!!
-    }
-
-    fun checkSelectedIntentionByName(selected: String) : Boolean {
-        return checkIntention(getIntentionActionByName(selected))
-    }
-
     private fun checkIntention(intention: IntentionAction) : Boolean {
         return intention.isAvailable(project, editor, file)
     }
 
-    fun getIntentionsList(onlyAvailable: Boolean): List<String> {
-        var actions = IntentionManagerImpl().availableIntentionActions // TODO check difference with IntentionManagerImpl.getInstance()
-        if (onlyAvailable) {
-            actions = actions.filter { checkIntention(it) }.toTypedArray()
-        }
-        actions.forEach { intentionsMap[it.familyName] = it }
-        return actions.map { it.familyName } // TODO check if this should be changed to getText()
+    fun getIntentionsList(onlyAvailable: Boolean): List<IntentionAction> {
+        return if (onlyAvailable) actions.filter { checkIntention(it) }.toList() else actions.toList()
     }
 
 }

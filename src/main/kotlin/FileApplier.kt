@@ -1,8 +1,8 @@
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 
-class FileApplier(private val handler: CurrentFileHandler) {
-    private val usedPositions = HashSet<Int>()
+class FileApplier(private val handler: CurrentPositionHandler) {
+    private val usedPositions = mutableSetOf<Int>()
     fun start() {
         val file  = handler.file.copy() // File in editor should be consistent with this one
         val dotPrinter = IntentionListToDot()
@@ -17,12 +17,13 @@ class FileApplier(private val handler: CurrentFileHandler) {
                     usedPositions.add(offset) // Consider each position only once
                     println(offset)
                     handler.editor.caretModel.moveToOffset(offset)
-                    val applier = SequentialApplier(handler)
-                    applier.start()
-                    val fileName = "$offset - $element"
+                    val applier = SequentialApplier(handler) // Copy file to get rid of hash set with Actions
+                    if (applier.start()) {
+                        val fileName = "$offset - $element"
 
-                    if (dotPrinter.process(applier.events, currentFilename, fileName)) {
-                        applier.dumpHashMap(currentFilename, fileName)
+                        if (dotPrinter.process(applier.events, currentFilename, fileName)) {
+                            applier.dumpHashMap(currentFilename, fileName)
+                        }
                     }
                 }
                 super.visitElement(element)
