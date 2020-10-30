@@ -55,7 +55,7 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
             }
             // Attempt to throw away "bad" intentions
             // "Introduce local variable" sometimes is OK, sometimes breaks everything
-            if (!intention.startInWriteAction()) { // What's wrong with local variable?
+            if (!intention.startInWriteAction()) {
                 println("Skipping ${intention.familyName}")
                 continue
             }
@@ -101,7 +101,7 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
             file.createNewFile()
         file.printWriter().use { out ->
             hashes.forEach {
-                out.println("${it.key}, ${it.value}")
+                out.println("${it.key}\n${it.value}\n")
             }
         }
     }

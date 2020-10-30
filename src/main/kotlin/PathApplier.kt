@@ -1,17 +1,27 @@
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbServiceImpl
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import java.io.File
+import kotlin.concurrent.thread
 
 class PathApplier(handler: CurrentPositionHandler) {
-    private val project = handler.project;
+    private var project = handler.project;
     fun start(path: String) {
         val file = File(path)
         if (file.isFile) {
-            startForFile(path)
+            if (file.extension == "sample") {
+                val files = file.readLines()
+                files.drop(1).forEach { startForFile(it) } // File with paths in it
+            } else {
+                startForFile(path)
+            }
         } else {
             file.walk().filter { it.extension == "java" }.forEach { startForFile(it.absolutePath) }
         }

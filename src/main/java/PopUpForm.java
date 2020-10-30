@@ -13,6 +13,7 @@ public class PopUpForm extends JFrame {
     private JButton applySequenceButton;
     private JButton applyToFileButton;
     private JButton applyToPathButton;
+    private JButton gatherStatisticsButton;
 
 
     public void initialize(AnActionEvent e) {
@@ -43,6 +44,10 @@ public class PopUpForm extends JFrame {
                 applier.dumpHashMap("noname", "out");
                 new IntentionListToDot().process(applier.getEvents(), "noname", "out");
             }
+        });
+
+        gatherStatisticsButton.addActionListener(event -> {
+            new StatisticsGatherer(12).gather(textField.getText());
         });
 
         applyToFileButton.addActionListener(event -> {
