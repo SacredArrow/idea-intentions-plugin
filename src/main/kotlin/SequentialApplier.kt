@@ -1,5 +1,6 @@
 import GlobalStorage.out_path
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.serialization.*
@@ -60,8 +61,14 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
                 continue
             }
 
+            if (IdeEventQueue.getInstance().isPopupActive) {
+                println("Skipping ${intention.familyName} because it needs popup")
+                IdeEventQueue.getInstance().popupManager.closeAllPopups()
+                continue
+            }
+
             /*
-            This also drops "Convert number" (opens pop-up),  "Replace with block comment" (otherwise
+            This also drops "Replace with block comment" (otherwise
             it becomes endless loop of adding spaces in the end),
              "Cast expression" (endless loop with "Create Local Var from instanceof Usage"),
              "Break string on '\n'"(loop)
