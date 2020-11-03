@@ -17,8 +17,13 @@ class PathApplier(handler: CurrentPositionHandler) {
         val file = File(path)
         if (file.isFile) {
             if (file.extension == "sample") {
+                File("${GlobalStorage.out_path}/dots").deleteRecursively()
+                File("${GlobalStorage.out_path}/maps").deleteRecursively()
                 val files = file.readLines()
-                files.drop(1).forEach { startForFile(it) } // File with paths in it
+                project = ProjectManager.getInstance().loadAndOpenProject(files.first())!!
+                DumbService.getInstance(project).smartInvokeLater {
+                    files.drop(1).forEach { startForFile(it) } // File with paths in it
+                }
             } else {
                 startForFile(path)
             }

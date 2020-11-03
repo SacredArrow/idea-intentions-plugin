@@ -46,9 +46,7 @@ public class PopUpForm extends JFrame {
             }
         });
 
-        gatherStatisticsButton.addActionListener(event -> {
-            new StatisticsGatherer(12).gather(textField.getText());
-        });
+        gatherStatisticsButton.addActionListener(event -> new StatisticsGatherer().gather(textField.getText()));
 
         applyToFileButton.addActionListener(event -> {
             FileApplier applier = new FileApplier(handler);
@@ -63,6 +61,7 @@ public class PopUpForm extends JFrame {
     private void refreshList(boolean onlyAvailable, AnActionEvent e) {
         comboBox.removeAllItems();
         for (IntentionAction intention : new CurrentPositionHandler(e).getIntentionsList(onlyAvailable)) {
+//            System.out.println(intention.getFamilyName());
             comboBox.addItem(intention.getFamilyName());
         }
     }

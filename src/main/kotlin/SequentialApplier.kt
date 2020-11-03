@@ -9,6 +9,9 @@ import kotlinx.serialization.json.Json
 
 data class CodeState(var code: String, var offset: Int)
 
+@Serializable
+data class CodePiece(var hash: Int, var code: String)
+
 class SequentialApplier(private val handler: CurrentPositionHandler) {
     var events = mutableListOf<IntentionEvent>()
     private var hashes = mutableMapOf<Int, String>()
@@ -50,7 +53,7 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
             val actionName = intention.familyName
             if (intention is IntentionActionWrapper) {
                 if ("semantics" in intention.delegate.toString()) { // It doesn't filter all the semantic problems
-                    println("$actionName(${intention.delegate} changes semantics?")
+                    println("$actionName(${intention.delegate} changes semantics? Skipping...")
                     continue
                 }
             }
@@ -61,6 +64,7 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
                 continue
             }
 
+            // This is useful only when editor is displayed. Otherwise it can't see that popup is active (and it isn't called before it)
             if (IdeEventQueue.getInstance().isPopupActive) {
                 println("Skipping ${intention.familyName} because it needs popup")
                 IdeEventQueue.getInstance().popupManager.closeAllPopups()
@@ -73,10 +77,23 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
              "Cast expression" (endless loop with "Create Local Var from instanceof Usage"),
              "Break string on '\n'"(loop)
              */
-            if (setOfSemanticsChangingIntentions.contains(actionName)) continue
-            runWriteCommandAndCommit {
-                intention.isAvailable(handler.project, handler.editor, handler.file)
-                intention.invoke(handler.project, handler.editor, handler.file)
+            if (setOfSemanticsChangingIntentions.contains(actionName)) {
+                println("Skipping ${intention.familyName} because it is in the list")
+                continue
+            }
+//            println(actionName)
+            try {
+                runWriteCommandAndCommit {
+                    intention.isAvailable(handler.project, handler.editor, handler.file)
+                    intention.invoke(handler.project, handler.editor, handler.file)
+                }
+            } catch (e: AssertionError) {
+                if (e.message == "Editor must be showing on the screen") {
+                    println("Editor assertion skipped")
+                    continue
+                } else {
+                    throw(e)
+                }
             }
             val newCode = document.text
             val event = IntentionEvent(actionName, oldState.code.hashCode(), newCode.hashCode())
@@ -101,15 +118,18 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
     }
 
     fun dumpHashMap(parentFilename: String, filename: String) { // Write our map to file
-        val file = File("$out_path/maps/$parentFilename/$filename.txt")
+        val file = File("$out_path/maps/$parentFilename/$filename.json")
         if (!file.parentFile.exists())
             file.parentFile.mkdirs()
         if (!file.exists())
             file.createNewFile()
+        val codePieces = mutableListOf<CodePiece>()
+        hashes.forEach {
+            codePieces.add(CodePiece(it.key, it.value))
+        }
+
         file.printWriter().use { out ->
-            hashes.forEach {
-                out.println("${it.key}\n${it.value}\n")
-            }
+            out.print(Json{prettyPrint = true}.encodeToString(codePieces))
         }
     }
 
