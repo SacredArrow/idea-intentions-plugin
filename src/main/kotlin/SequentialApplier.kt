@@ -98,6 +98,7 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
             val newCode = document.text
             val event = IntentionEvent(actionName, oldState.code.hashCode(), newCode.hashCode())
             events.add(event)
+            GlobalStorage.usedIntentions.add(actionName)
             println(event)
             if (event.hash_start !in hashes.keys) {
                 hashes[event.hash_start] = getLinesAroundOffset(oldState.code, startingOffset) // Store only small pieces of code

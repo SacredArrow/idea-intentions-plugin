@@ -11,7 +11,7 @@ import com.intellij.psi.PsiManager
 import java.io.File
 import kotlin.concurrent.thread
 
-class PathApplier(handler: CurrentPositionHandler) {
+class PathApplier(private val handler: CurrentPositionHandler) {
     private var project = handler.project;
     fun start(path: String) {
         val file = File(path)
@@ -29,6 +29,11 @@ class PathApplier(handler: CurrentPositionHandler) {
             }
         } else {
             file.walk().filter { it.extension == "java" }.forEach { startForFile(it.absolutePath) }
+        }
+        for (el in GlobalStorage.usedIntentions) println(el)
+        println("\nUnused:")
+        for (el in handler.getIntentionsList(false)) {
+            if (!GlobalStorage.usedIntentions.contains(el.familyName)) println(el.familyName)
         }
     }
     private fun startForFile(path: String) {
