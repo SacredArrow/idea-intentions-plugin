@@ -129,9 +129,7 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
             codePieces.add(CodePiece(it.key, it.value))
         }
 
-        file.printWriter().use { out ->
-            out.print(Json{prettyPrint = true}.encodeToString(codePieces))
-        }
+        file.writeText(Json{prettyPrint = true}.encodeToString(codePieces))
     }
 
 

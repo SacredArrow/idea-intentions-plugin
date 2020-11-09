@@ -2,6 +2,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import java.io.File
 
+// Checks, how many intentions there are in every file
 class StatisticsGatherer {
     private var outputFile: File? = null
     fun gather(path: String) { // This path is the path files were created for. We only need it to extract filename.
