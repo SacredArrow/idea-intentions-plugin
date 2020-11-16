@@ -48,8 +48,11 @@ public class PopUpForm extends JFrame {
             }
         });
 
+        // For each processed file creates csv with number of nodes in tree
         gatherStatisticsButton.addActionListener(event -> new StatisticsGatherer().gather(textField.getText()));
+        // Gets intentions examples (like in settings)
         extractExamplesButton.addActionListener(event -> new ExamplesExtractor().start());
+        // Checks whether intentions work on above-mentioned examples
         assertIntentionsButton.addActionListener(event -> new IntentionsAsserter(handler).start());
 
         applyToFileButton.addActionListener(event -> {

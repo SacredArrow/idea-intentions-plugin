@@ -20,7 +20,7 @@ class PathApplier(private val handler: CurrentPositionHandler) {
                 File("${GlobalStorage.out_path}/dots").deleteRecursively()
                 File("${GlobalStorage.out_path}/maps").deleteRecursively()
                 val files = file.readLines()
-                project = ProjectManager.getInstance().loadAndOpenProject(files.first())!!
+//                project = ProjectManager.getInstance().loadAndOpenProject(files.first())!! // This line opens project, but it is bugged
                 DumbService.getInstance(project).smartInvokeLater {
                     files.drop(1).forEach { startForFile(it) } // File with paths in it
                 }
