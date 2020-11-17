@@ -45,4 +45,24 @@ class StatisticsGatherer {
         }
 
     }
+
+    fun unite() {
+        val sets = mutableMapOf<String, Set<String>>()
+        File("${GlobalStorage.out_path}/statistics").walk().filter { it.extension == "stat2" }.forEach {
+            val info: ProjectInfo = Json.decodeFromString(it.readText())
+            sets[info.name] = info.intentions
+        }
+        var intersection = emptySet<String>()
+        var union = emptySet<String>()
+        for ((key, value)  in sets) {
+            intersection = if (intersection.isEmpty()) value else intersection.intersect(value)
+            union = union union value
+        }
+        println("Present in all projects: ${intersection.size}")
+        for (el in intersection) println(el)
+        println()
+        println("Present in at least one project: ${union.size}")
+        for (el in union) println(el)
+
+    }
 }

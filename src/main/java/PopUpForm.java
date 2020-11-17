@@ -16,6 +16,8 @@ public class PopUpForm extends JFrame {
     private JButton gatherStatisticsButton;
     private JButton extractExamplesButton;
     private JButton assertIntentionsButton;
+    private JButton uniteStatisticsButton;
+    private JButton labelStudioExportButton;
 
 
     public void initialize(AnActionEvent e) {
@@ -50,10 +52,14 @@ public class PopUpForm extends JFrame {
 
         // For each processed file creates csv with number of nodes in tree
         gatherStatisticsButton.addActionListener(event -> new StatisticsGatherer().gather(textField.getText()));
+        // Combine all "stat2" files
+        uniteStatisticsButton.addActionListener(event -> new StatisticsGatherer().unite());
         // Gets intentions examples (like in settings)
         extractExamplesButton.addActionListener(event -> new ExamplesExtractor().start());
         // Checks whether intentions work on above-mentioned examples
         assertIntentionsButton.addActionListener(event -> new IntentionsAsserter(handler).start());
+        // Makes json file for LabelStudio from processed files
+        labelStudioExportButton.addActionListener(event -> LabelStudioExporter.INSTANCE.export());
 
         applyToFileButton.addActionListener(event -> {
             FileApplier applier = new FileApplier(handler);
