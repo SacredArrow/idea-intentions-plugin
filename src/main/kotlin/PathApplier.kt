@@ -1,19 +1,39 @@
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbServiceImpl
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import java.io.File
+import kotlin.concurrent.thread
 
-class PathApplier(handler: CurrentPositionHandler) {
-    private val project = handler.project;
+class PathApplier(private val handler: CurrentPositionHandler) {
+    private var project = handler.project;
     fun start(path: String) {
         val file = File(path)
         if (file.isFile) {
-            startForFile(path)
+            if (file.extension == "sample") {
+                File("${GlobalStorage.out_path}/dots").deleteRecursively()
+                File("${GlobalStorage.out_path}/maps").deleteRecursively()
+                val files = file.readLines()
+//                project = ProjectManager.getInstance().loadAndOpenProject(files.first())!! // This line opens project, but it is bugged
+                DumbService.getInstance(project).smartInvokeLater {
+                    files.drop(1).forEach { startForFile(it) } // File with paths in it
+                }
+            } else {
+                startForFile(path)
+            }
         } else {
             file.walk().filter { it.extension == "java" }.forEach { startForFile(it.absolutePath) }
+        }
+        for (el in GlobalStorage.usedIntentions) println(el)
+        println("\nUnused:")
+        for (el in handler.getIntentionsList(false)) {
+            if (!GlobalStorage.usedIntentions.contains(el.familyName)) println(el.familyName)
         }
     }
     private fun startForFile(path: String) {
