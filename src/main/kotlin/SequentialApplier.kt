@@ -36,10 +36,10 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
         }
     }
 
-    private fun getLinesAroundOffset(text: String, offset: Int, linesAround: Int = 5) : String{
+    private fun getLinesAroundOffset(text: String, offset: Int) : String{
         val onLine = text.take(offset + 1).lines().size
         val lines = text.lines()
-        return lines.subList(maxOf(onLine - linesAround, 0), minOf(onLine + linesAround, lines.size)).joinToString(separator = "\n")
+        return lines.subList(maxOf(onLine - GlobalStorage.linesAround, 0), minOf(onLine + GlobalStorage.linesAround, lines.size)).joinToString(separator = "\n")
     }
 
     fun start(depth: Int = 0, max_depth: Int = 20): Boolean {

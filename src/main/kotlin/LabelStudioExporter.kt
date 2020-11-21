@@ -20,7 +20,7 @@ object LabelStudioExporter {
             val codePieces: List<CodePiece> = Json.decodeFromString(it.readText())
             val originalVariant = codePieces.first() // Here we rely on default implementations of Map and List which preserves insertion order
             for (codePiece in codePieces.drop(1)) {
-                val el = LabelStudioInputElement(LabelStudioData(addTags(originalVariant.code), addTags(codePiece.code), id))
+                val el = LabelStudioInputElement(LabelStudioData(addPrimers(originalVariant.code), addPrimers(codePiece.code), id))
                 // Tab replacement just in case of their presence in file name
                 linkageFile.appendText("${id}\t${it.absolutePath.replace("\t", " ")}\t${originalVariant.hash}\t${codePiece.hash}\n")
                 id++
@@ -30,7 +30,11 @@ object LabelStudioExporter {
         File("${GlobalStorage.out_path}/labelStudioFiles/sample.json").writeText(Json{prettyPrint = true}.encodeToString(elements))
     }
 
-    private fun addTags(s: String) : String {
-        return "<code><pre>$s</pre></code>" // For code to be rendered correctly
+    private fun addPrimers(code: String): String { // This is needed to have a selection in Label Studio
+        val codeLines = code.lines().toMutableList()
+        codeLines[GlobalStorage.linesAround - 2] = codeLines[GlobalStorage.linesAround - 2] + "// Start_of_unique_sequence_which_shouldnt_be_repeated"
+        codeLines[GlobalStorage.linesAround - 1] = codeLines[GlobalStorage.linesAround - 1] + "// End_of_unique_sequence_which_shouldnt_be_repeated"
+        return codeLines.joinToString("\n")
     }
+
 }
