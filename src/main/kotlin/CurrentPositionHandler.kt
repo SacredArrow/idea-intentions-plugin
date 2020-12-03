@@ -6,12 +6,21 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
+import java.io.File
 
 class CurrentPositionHandler {
     val project: Project
     val editor: Editor
     val file: PsiFile
-    var actions: Array<IntentionAction> = IntentionManagerImpl().availableIntentionActions // TODO check difference with IntentionManagerImpl.getInstance()
+    private var actions: Array<IntentionAction>
+    init {
+        val file = File("${GlobalStorage.out_path}/intentionsWhiteList.json")
+        val list: List<String> = Json.decodeFromString(file.readText())
+        actions = IntentionManagerImpl().availableIntentionActions.filter { it.familyName in list }.toTypedArray() // TODO check difference with IntentionManagerImpl.getInstance()
+
+    }
 
     constructor(project: Project, editor: Editor, file: PsiFile) {
         this.project = project

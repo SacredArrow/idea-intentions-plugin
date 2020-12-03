@@ -7,14 +7,14 @@ import kotlinx.serialization.*
 import java.io.File
 import kotlinx.serialization.json.Json
 
-data class CodeState(var code: String, var offset: Int)
+data class CodeState(val code: String, val offset: Int)
 
 @Serializable
-data class CodePiece(var hash: Int, var code: String)
+data class CodePiece(val hash: Int, val code: String, val intentionLine: Int)
 
 class SequentialApplier(private val handler: CurrentPositionHandler) {
     var events = mutableListOf<IntentionEvent>()
-    private var hashes = mutableMapOf<Int, String>()
+    private var hashes = mutableMapOf<Int, Pair<Int, String>>()
     private val document = handler.editor.document // Is it okay to put it here?
     private val docManager = PsiDocumentManager.getInstance(handler.project)
     private val caret = handler.editor.caretModel
@@ -36,10 +36,11 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
         }
     }
 
-    private fun getLinesAroundOffset(text: String, offset: Int) : String{
+    private fun getLinesAroundOffset(text: String, offset: Int) : Pair<Int, String>{
         val onLine = text.take(offset + 1).lines().size
         val lines = text.lines()
-        return lines.subList(maxOf(onLine - GlobalStorage.linesAround, 0), minOf(onLine + GlobalStorage.linesAround, lines.size)).joinToString(separator = "\n")
+        val code = lines.subList(maxOf(onLine - GlobalStorage.linesAround, 0), minOf(onLine + GlobalStorage.linesAround, lines.size)).joinToString(separator = "\n")
+        return Pair(minOf(onLine + 1, GlobalStorage.linesAround), code)
     }
 
     fun start(depth: Int = 0, max_depth: Int = 20): Boolean {
@@ -126,7 +127,7 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
             file.createNewFile()
         val codePieces = mutableListOf<CodePiece>()
         hashes.forEach {
-            codePieces.add(CodePiece(it.key, it.value))
+            codePieces.add(CodePiece(it.key, it.value.second, it.value.first))
         }
 
         file.writeText(Json{prettyPrint = true}.encodeToString(codePieces))

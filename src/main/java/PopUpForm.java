@@ -1,9 +1,11 @@
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import graph.Graph;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
+import java.io.File;
 
 public class PopUpForm extends JFrame {
     private JComboBox<String> comboBox;
@@ -18,6 +20,7 @@ public class PopUpForm extends JFrame {
     private JButton assertIntentionsButton;
     private JButton uniteStatisticsButton;
     private JButton labelStudioExportButton;
+    private JButton testButtonButton;
 
 
     public void initialize(AnActionEvent e) {
@@ -60,6 +63,14 @@ public class PopUpForm extends JFrame {
         assertIntentionsButton.addActionListener(event -> new IntentionsAsserter(handler).start());
         // Makes json file for LabelStudio from processed files
         labelStudioExportButton.addActionListener(event -> LabelStudioExporter.INSTANCE.export());
+
+        // Testing purposes
+        testButtonButton.addActionListener(event -> {
+            Graph graph = new Graph();
+            graph.build(new File(textField.getText()));
+            graph.bfs();
+
+        });
 
         applyToFileButton.addActionListener(event -> {
             FileApplier applier = new FileApplier(handler);

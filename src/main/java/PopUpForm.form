@@ -110,6 +110,14 @@
           <text value="LabelStudio export"/>
         </properties>
       </component>
+      <component id="19385" class="javax.swing.JButton" binding="testButtonButton" default-binding="true">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="TestButton"/>
+        </properties>
+      </component>
     </children>
   </grid>
 </form>
