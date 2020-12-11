@@ -16,9 +16,23 @@ class CurrentPositionHandler {
     val file: PsiFile
     private var actions: Array<IntentionAction>
     init {
-        val file = File("${GlobalStorage.out_path}/intentionsWhiteList.json")
-        val list: List<String> = Json.decodeFromString(file.readText())
-        actions = IntentionManagerImpl().availableIntentionActions.filter { it.familyName in list }.toTypedArray() // TODO check difference with IntentionManagerImpl.getInstance()
+        val whiteList = File("${GlobalStorage.out_path}/intentionJsons/intentionsWhiteList.json")
+        val blackList = File("${GlobalStorage.out_path}/intentionJsons/intentionsBlackList.json")
+        actions = when {
+            whiteList.exists() -> {
+                val list: List<String> = Json.decodeFromString(whiteList.readText())
+                IntentionManagerImpl().availableIntentionActions.filter { it.familyName in list }
+                    .toTypedArray() // TODO check difference with IntentionManagerImpl.getInstance()
+            }
+            blackList.exists() -> {
+                val list: List<String> = Json.decodeFromString(blackList.readText())
+                IntentionManagerImpl().availableIntentionActions.filter { it.familyName !in list }
+                    .toTypedArray()
+            }
+            else -> {
+                IntentionManagerImpl().availableIntentionActions
+            }
+        }
 
     }
 

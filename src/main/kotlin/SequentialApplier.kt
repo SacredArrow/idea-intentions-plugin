@@ -22,7 +22,7 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
     private val startingOffset = caret.offset
 
     init {
-        val file = File("$out_path/badIntentions.json")
+        val file = File("$out_path/intentionJsons/badIntentions.json")
         setOfSemanticsChangingIntentions = Json.decodeFromString(file.readText())
     }
 

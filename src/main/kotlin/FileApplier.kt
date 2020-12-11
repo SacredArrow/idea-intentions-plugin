@@ -20,9 +20,7 @@ class FileApplier(private val handler: CurrentPositionHandler) {
                     val applier = SequentialApplier(handler) // Copy file to get rid of hash set with Actions
                     if (applier.start()) {
                         var fileName = "$offset - $element"
-                        if (fileName.length > 100) { // Some filenames are too long
-                            fileName = fileName.substring(0,100)
-                        }
+                        fileName = GlobalStorage.cleanFileName(fileName)
                         if (dotPrinter.process(applier.events, currentFilename, fileName)) {
                             applier.dumpHashMap(currentFilename, fileName)
                         }

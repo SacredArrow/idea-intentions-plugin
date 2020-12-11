@@ -1,14 +1,20 @@
 package graph
 
 import com.intellij.util.containers.toArray
+import graph.Graph.Mappings.indexToPathMapping
+import graph.Graph.Mappings.ix
+import graph.Graph.Mappings.pathToIndexMapping
 import java.io.File
 import java.util.*
 
 class Graph {
+    object Mappings { // TODO Make it private later
+        val pathToIndexMapping = mutableMapOf<List<String>, Int>() // Path -> Index(not hash)
+        val indexToPathMapping = mutableMapOf<Int, Pair<List<String>, Int>>() // Index -> Path with length
+        var ix = 1
+    }
     val nodes = mutableMapOf<Int, Node>()
     private val visited = mutableMapOf<Int, Boolean>()
-    private val pathToIndexMapping = mutableMapOf<List<String>, Int>() // Path -> Index(not hash)
-    private val indexToPathMapping = mutableMapOf<Int, List<String>>()
     var startNode: Int = 0
 
     fun build(file: File) {
@@ -38,7 +44,6 @@ class Graph {
 
     fun bfs() {
         val q = ArrayDeque<Pair<Int, Vertex>>()
-        var ix = 1
         q.add(Pair(startNode, Vertex("", -1, startNode))) // Start node doesn't have parent vertex
         visited[startNode] = true
         while (!q.isEmpty()) {
@@ -46,13 +51,13 @@ class Graph {
             val node = nodes[el.first]!!
             var path = mutableListOf<String>()
             if (el.second.start != -1) {
-                path = indexToPathMapping[nodes[el.second.start]!!.pathIndex]!!.toMutableList() // Get path to parent
+                path = indexToPathMapping[nodes[el.second.start]!!.pathIndex]!!.first.toMutableList() // Get path to parent
             }
             path.add(el.second.label) // ...and add last vertex
             if (path !in pathToIndexMapping.keys) {
                 node.pathIndex = ix
                 pathToIndexMapping[path] = ix
-                indexToPathMapping[ix] = path
+                indexToPathMapping[ix] = Pair(path, path.size)
                 ix++
             } else {
                 node.pathIndex = pathToIndexMapping[path]!!

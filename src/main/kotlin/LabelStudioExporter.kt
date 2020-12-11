@@ -17,12 +17,14 @@ object LabelStudioExporter {
         val usedPieces = mutableMapOf<Pair<Int, Int>, Int>() // Two hashes and their ref_id to have every pair only once
         val linkageFile = File("${GlobalStorage.out_path}/labelStudioFiles/linkage.tsv")
         linkageFile.delete()
-        linkageFile.appendText("id\tfile\tfirst_hash\tsecond_hash\tref_id\n")
+        linkageFile.appendText("id\tfile\tfirst_hash\tsecond_hash\tref_id\tpath_id\n")
         var id = 0
         val elements = mutableListOf<LabelStudioInputElement>()
         File("${GlobalStorage.out_path}/maps").walk().filter { it.isFile }.forEach {
             val graph = Graph()
-            val fileName = it.absolutePath.split("/").takeLast(2).joinToString("/").split(".").dropLast(1).joinToString(".") + ".dot"
+            // Get folder name and change extension
+            var fileName = it.absolutePath.split("/").takeLast(2).joinToString("/").split(".").dropLast(1).joinToString(".") + ".dot"
+
             graph.build(File("${GlobalStorage.out_path}/dots/$fileName"))
             graph.bfs()
             val codePieces: List<CodePiece> = Json.decodeFromString(it.readText())
@@ -31,7 +33,7 @@ object LabelStudioExporter {
                 val pair = Pair(originalVariant.code.hashCode(), codePiece.code.hashCode())
                 val pathId = graph.nodes[codePiece.hash]!!.pathIndex
                 if (pair in usedPieces.keys) {
-                    linkageFile.appendText("${id}\t${it.absolutePath.replace("\t", " ")}\t${originalVariant.hash}\t${codePiece.hash}\t${usedPieces[pair]}\n")
+                    linkageFile.appendText("${id}\t${it.absolutePath.replace("\t", " ")}\t${originalVariant.hash}\t${codePiece.hash}\t${usedPieces[pair]}\t$pathId\n")
                     id++
                     continue
                 } else {
@@ -50,7 +52,7 @@ object LabelStudioExporter {
                                 "\t",
                                 " "
                             )
-                        }\t${originalVariant.hash}\t${codePiece.hash}\t$id\n"
+                        }\t${originalVariant.hash}\t${codePiece.hash}\t$id\t$pathId\n"
                     )
                     usedPieces[pair] = id
                     id++
@@ -61,11 +63,13 @@ object LabelStudioExporter {
                 }
             }
         }
-        for ((_, value) in pathIndexToCode) {
-//            println("$key ${value.size}")
+        for ((key, value) in pathIndexToCode) {
+            println("$key ${value.size} ${Graph.Mappings.indexToPathMapping[key]}")
             elements.addAll(value.shuffled().take(GlobalStorage.samplesForEachPath))
         }
         File("${GlobalStorage.out_path}/labelStudioFiles/sample.json").writeText(Json{prettyPrint = true}.encodeToString(elements))
+        File("${GlobalStorage.out_path}/labelStudioFiles/pathIndexToPath.json").writeText(Json{prettyPrint = true}.encodeToString(Graph.Mappings.indexToPathMapping))
+        print(elements.size)
     }
 
     private fun addPrimers(code: String, intentionLine: Int): String { // This is needed to have a selection in Label Studio
