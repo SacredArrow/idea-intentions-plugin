@@ -12,6 +12,9 @@ class LabelStudioData(val first: String, val second: String, val ref_id: Int)
 class LabelStudioInputElement(val data: LabelStudioData) // For some reason library doesn't allow creation of data inside of constructor
 
 object LabelStudioExporter {
+    private fun sanitizePath(path: String) : String {
+        return path.replace("\t", " ").replace("\n", " ")
+    }
     fun export() {
         val pathIndexToCode = mutableMapOf<Int, MutableList<LabelStudioInputElement>>()
         val usedPieces = mutableMapOf<Pair<Int, Int>, Int>() // Two hashes and their ref_id to have every pair only once
@@ -33,7 +36,7 @@ object LabelStudioExporter {
                 val pair = Pair(originalVariant.code.hashCode(), codePiece.code.hashCode())
                 val pathId = graph.nodes[codePiece.hash]!!.pathIndex
                 if (pair in usedPieces.keys) {
-                    linkageFile.appendText("${id}\t${it.absolutePath.replace("\t", " ")}\t${originalVariant.hash}\t${codePiece.hash}\t${usedPieces[pair]}\t$pathId\n")
+                    linkageFile.appendText("${id}\t${sanitizePath(it.absolutePath)}\t${originalVariant.hash}\t${codePiece.hash}\t${usedPieces[pair]}\t$pathId\n")
                     id++
                     continue
                 } else {
@@ -47,12 +50,7 @@ object LabelStudioExporter {
                     )
                     // Tab replacement just in case of their presence in file name
                     linkageFile.appendText(
-                        "${id}\t${
-                            it.absolutePath.replace(
-                                "\t",
-                                " "
-                            )
-                        }\t${originalVariant.hash}\t${codePiece.hash}\t$id\t$pathId\n"
+                        "${id}\t${sanitizePath(it.absolutePath)}\t${originalVariant.hash}\t${codePiece.hash}\t$id\t$pathId\n"
                     )
                     usedPieces[pair] = id
                     id++

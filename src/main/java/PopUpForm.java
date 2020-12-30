@@ -21,6 +21,7 @@ public class PopUpForm extends JFrame {
     private JButton uniteStatisticsButton;
     private JButton labelStudioExportButton;
     private JButton testButtonButton;
+    private JButton calculateMetricsButton;
 
 
     public void initialize(AnActionEvent e) {
@@ -63,6 +64,8 @@ public class PopUpForm extends JFrame {
         assertIntentionsButton.addActionListener(event -> new IntentionsAsserter(handler).start());
         // Makes json file for LabelStudio from processed files
         labelStudioExportButton.addActionListener(event -> LabelStudioExporter.INSTANCE.export());
+        // Calculate metrics and export them to csv
+        calculateMetricsButton.addActionListener(event -> new MetricsCalculator().calculate());
 
         // Testing purposes
         testButtonButton.addActionListener(event -> {
