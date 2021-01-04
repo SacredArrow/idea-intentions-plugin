@@ -43,7 +43,6 @@ repositories {
     jcenter()
 }
 dependencies {
-//    compile (group = "com.github.adedayo.intellij.sdk", name =  "java-psi-api", version =  "142.1") // This adds some PSI support but the source is weird
 //    implementation(kotlin("reflect"))
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.13.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.0")
@@ -63,7 +62,7 @@ intellij {
 //  Plugin Dependencies:
 //  https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_dependencies.html
 //
-//  setPlugins("java")
+  setPlugins("java")
 }
 
 // Configure detekt plugin.
