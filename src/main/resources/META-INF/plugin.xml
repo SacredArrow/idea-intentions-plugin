@@ -16,6 +16,8 @@
     <extensions defaultExtensionNs="my.plugin">
         <metricsExtensionPoint implementation="metrics.NumberOfParametersMetric"/>
         <metricsExtensionPoint implementation="metrics.AverageLengthOfParameterNames"/>
+        <metricsExtensionPoint implementation="metrics.NumberOfPlusesMetric"/>
+        <metricsExtensionPoint implementation="metrics.NestingDepthMetric"/>
     </extensions>
 
 <!--    <extensions defaultExtensionNs="com.intellij">-->

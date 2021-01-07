@@ -46,7 +46,7 @@ class MetricsCalculator {
 
     fun calculate() {
         metricsFile.delete()
-        var metricNames = mutableSetOf<String>()
+        val metricNames = mutableSetOf<String>()
         for (extension in epName.extensionList){
             metricNames.add(extension.name)
         }
