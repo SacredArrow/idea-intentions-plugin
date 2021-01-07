@@ -22,7 +22,7 @@ class FileApplier(private val handler: CurrentPositionHandler) {
                         var fileName = "$offset - $element"
                         fileName = GlobalStorage.cleanFileName(fileName)
                         if (dotPrinter.process(applier.events, currentFilename, fileName)) {
-                            applier.dumpHashMap(currentFilename, fileName)
+                            applier.dumpHashMap(currentFilename, handler.file.virtualFile.path, fileName)
                         }
                     }
                 }

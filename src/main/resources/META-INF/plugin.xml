@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>org.jetbrains.plugins.template</id>
+    <id>my.plugin</id>
     <name>Template</name>
     <vendor>JetBrains</vendor>
 
@@ -7,6 +7,16 @@
     <!-- https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.java</depends>
+
+    <extensionPoints>
+        <extensionPoint name="metricsExtensionPoint"
+                        interface="metrics.Metric"/>
+    </extensionPoints>
+
+    <extensions defaultExtensionNs="my.plugin">
+        <metricsExtensionPoint implementation="metrics.NumberOfParametersMetric"/>
+        <metricsExtensionPoint implementation="metrics.AverageLengthOfParameterNames"/>
+    </extensions>
 
 <!--    <extensions defaultExtensionNs="com.intellij">-->
 <!--        <applicationService serviceImplementation="org.jetbrains.plugins.template.services.MyApplicationService"/>-->

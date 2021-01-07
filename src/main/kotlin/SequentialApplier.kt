@@ -10,8 +10,19 @@ import kotlinx.serialization.json.Json
 data class CodeState(val code: String, val offset: Int)
 
 // Hash of -1 is used inside map
+// Empty path is used inside map
+
 @Serializable
-data class CodePiece(var hash: Int, val code: String, val intentionLine: Int, val codeShift: Int, val offset: Int)
+data class CodePiece(
+    var hash: Int,
+    val code: String,
+    val intentionLine: Int,
+    val codePieceStart: Int,
+    val codePieceEnd: Int,
+    val offset: Int,
+    var path: String,
+    val fullCode: String
+)
 
 class SequentialApplier(private val handler: CurrentPositionHandler) {
     var events = mutableListOf<IntentionEvent>()
@@ -41,10 +52,15 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
         val onLine = text.take(offset + 1).lines().size
         val lines = text.lines()
         val startLine = maxOf(onLine - GlobalStorage.linesAround, 0)
-        val code = lines.subList(startLine, minOf(onLine + GlobalStorage.linesAround, lines.size)).joinToString(separator = "\n")
+        val endLine = minOf(onLine + GlobalStorage.linesAround, lines.size)
+        val code = lines.subList(startLine, endLine).joinToString(separator = "\n")
         var startOffset = 0
-        for (i in 0 until startLine) startOffset += lines[i].length
-        return CodePiece(-1, code, minOf(onLine + 1, GlobalStorage.linesAround), startOffset, offset)
+        for (i in 0 until startLine) startOffset += lines[i].length + 1
+        var endOffset = startOffset
+        for (i in startLine until endLine) {
+            endOffset += lines[i].length + 1
+        }
+        return CodePiece(-1, code, minOf(onLine + 1, GlobalStorage.linesAround), startOffset, endOffset - 1, offset, "", text)
 //        return Pair(minOf(onLine + 1, GlobalStorage.linesAround), code)
     }
 
@@ -124,7 +140,7 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
 
     }
 
-    fun dumpHashMap(parentFilename: String, filename: String) { // Write our map to file
+    fun dumpHashMap(parentFilename: String, path: String, filename: String) { // Write our map to file
         val file = File("$out_path/maps/$parentFilename/$filename.json")
         if (!file.parentFile.exists())
             file.parentFile.mkdirs()
@@ -133,6 +149,7 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
         val codePieces = mutableListOf<CodePiece>()
         hashes.forEach {
             it.value.hash = it.key
+            it.value.path = path
             codePieces.add(it.value)
         }
 

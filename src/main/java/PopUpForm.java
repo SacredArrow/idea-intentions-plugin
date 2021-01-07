@@ -45,11 +45,11 @@ public class PopUpForm extends JFrame {
             applier.start(path);
         });
 
-        applySequenceButton.addActionListener(event -> {
+        applySequenceButton.addActionListener(event -> { // Better not use this since it is old
             SequentialApplier applier = new SequentialApplier(handler);
 
             if (applier.start(0, 20)) { // Build intentions tree
-                applier.dumpHashMap("noname", "out");
+                applier.dumpHashMap("noname", "", "out");
                 new IntentionListToDot().process(applier.getEvents(), "noname", "out");
             }
         });
