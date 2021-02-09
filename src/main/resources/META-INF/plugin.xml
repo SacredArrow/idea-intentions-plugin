@@ -18,6 +18,8 @@
         <metricsExtensionPoint implementation="metrics.AverageLengthOfParameterNames"/>
         <metricsExtensionPoint implementation="metrics.NumberOfPlusesMetric"/>
         <metricsExtensionPoint implementation="metrics.NestingDepthMetric"/>
+        <metricsExtensionPoint implementation="metrics.NumberOfLineBreaksInsideExpression"/>
+        <metricsExtensionPoint implementation="metrics.MaxLineLengthInsideExpression"/>
     </extensions>
 
 <!--    <extensions defaultExtensionNs="com.intellij">-->
