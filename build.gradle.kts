@@ -8,14 +8,14 @@ plugins {
     id("java")
     // Kotlin support
 //    id("org.jetbrains.kotlin.jvm") version "1.4.10"
-    kotlin("jvm") version "1.4.10"
+    id("org.jetbrains.kotlin.jvm") version "1.4.30"
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
 //    id("org.jetbrains.intellij") version "0.4.22"
-    id("org.jetbrains.intellij") version "0.5.0"
+    id("org.jetbrains.intellij") version "0.6.5"
     // gradle-changelog-plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
-    id("org.jetbrains.changelog") version "0.5.0"
+    id("org.jetbrains.changelog") version "1.1.1"
     // detekt linter - read more: https://detekt.github.io/detekt/gradle.html
-    id("io.gitlab.arturbosch.detekt") version "1.13.1"
+    id("io.gitlab.arturbosch.detekt") version "1.15.0"
     // ktlint linter - read more: https://github.com/JLLeitschuh/ktlint-gradle
     id("org.jlleitschuh.gradle.ktlint") version "9.4.0"
     kotlin("plugin.serialization") version "1.4.10"
@@ -76,6 +76,11 @@ detekt {
         xml.enabled = false
         txt.enabled = false
     }
+}
+
+java {
+    val res = sourceSets.getByName("main").resources
+    res.srcDir("/home/custos/Projects/IdeaProjects/usableIntentionsPlugin/src/main/resources/")
 }
 
 tasks {

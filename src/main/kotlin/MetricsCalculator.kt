@@ -16,12 +16,12 @@ class MetricsCalculator {
     private val epName : ExtensionPointName<Metric> = ExtensionPointName.create("my.plugin.metricsExtensionPoint");
     private val metricsFile = File("${GlobalStorage.out_path}/labelStudioFiles/metrics.tsv")
 
-    private fun calculateForCodePiece(codePiece: CodePiece): MutableMap<String, Float?> {
+    fun calculateForCodePiece(codePiece: CodePiece, extensionPoint: ExtensionPointName<Metric> = epName): MutableMap<String, Float?> {
         // We can't extract it from disk since it can be changed piece, so we create new file
         val psiFile = PsiFileFactoryImpl(project).createFileFromText("dumb.java", JavaFileType.INSTANCE, codePiece.fullCode)
         val metrics = mutableMapOf<String, Float?>()
 
-        for (extension in epName.extensionList){
+        for (extension in extensionPoint.extensionList){
             metrics[extension.name] = extension.calculate(psiFile, codePiece)
         }
         return metrics

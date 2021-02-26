@@ -1,8 +1,14 @@
 import GlobalStorage.out_path
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.CaretModel
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.impl.PsiFileFactoryImpl
 import kotlinx.serialization.*
 import java.io.File
 import kotlinx.serialization.json.Json
@@ -24,22 +30,35 @@ data class CodePiece(
     val fullCode: String
 )
 
-class SequentialApplier(private val handler: CurrentPositionHandler) {
+class SequentialApplier(handler: CurrentPositionHandler) {
+    private val handler : CurrentPositionHandler
     var events = mutableListOf<IntentionEvent>()
     private var hashes = mutableMapOf<Int, CodePiece>()
-    private val document = handler.editor.document // Is it okay to put it here?
+//    private val document = handler.editor.document // Is it okay to put it here?
+    private val document : Document
     private val docManager = PsiDocumentManager.getInstance(handler.project)
-    private val caret = handler.editor.caretModel
+    private val caret : CaretModel
     private var setOfSemanticsChangingIntentions: Set<String> = emptySet() // TODO Should it be moved outside of the class?
-    private val startingOffset = caret.offset
+    private val startingOffset : Int
 
     init {
-        val file = File("$out_path/intentionJsons/badIntentions.json")
+        val file = this::class.java.classLoader.getResource("badIntentions.json")
         setOfSemanticsChangingIntentions = Json.decodeFromString(file.readText())
+        val psiFile = PsiFileFactoryImpl(handler.project).createFileFromText("dumb.java", JavaFileType.INSTANCE, handler.file.text) // Make dumb file so the original is not changed
+        this.document = psiFile.viewProvider.document!!
+        var editor: Editor? = null
+        WriteCommandAction.runWriteCommandAction(handler.project) {
+            editor = EditorFactory.getInstance().createEditor(this.document) // Must be invoked in EDT?
+        }
+        this.caret = editor!!.caretModel
+        this.caret.moveToOffset(handler.editor.caretModel.offset)
+        this.handler = CurrentPositionHandler(handler.project, editor!!, psiFile)
+        this.startingOffset = caret.offset
+
     }
 
     // Explanation of the following function: https://jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html
-    private fun runWriteCommandAndCommit(command: () -> Unit) {
+    fun runWriteCommandAndCommit(command: () -> Unit) {
         WriteCommandAction.runWriteCommandAction(handler.project) {
             command()
         }
@@ -154,6 +173,16 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
         }
 
         file.writeText(Json{prettyPrint = true}.encodeToString(codePieces))
+    }
+
+    fun getCodePieces(): MutableCollection<CodePiece> {
+        val codePieces = mutableListOf<CodePiece>()
+        hashes.forEach {
+            it.value.hash = it.key
+            it.value.path = "*Skipped value*"
+            codePieces.add(it.value)
+        }
+        return codePieces
     }
 
 

@@ -71,7 +71,7 @@ public class PopUpForm extends JFrame {
         testButtonButton.addActionListener(event -> {
             Graph graph = new Graph();
             graph.build(new File(textField.getText()));
-            graph.bfs();
+            graph.bfs(false);
 
         });
 

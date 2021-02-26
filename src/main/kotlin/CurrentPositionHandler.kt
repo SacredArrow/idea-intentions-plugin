@@ -14,23 +14,21 @@ class CurrentPositionHandler {
     val project: Project
     val editor: Editor
     val file: PsiFile
-    private var actions: Array<IntentionAction>
+    private var actions: List<IntentionAction>
     init {
         val whiteList = File("${GlobalStorage.out_path}/intentionJsons/intentionsWhiteList.json")
         val blackList = File("${GlobalStorage.out_path}/intentionJsons/intentionsBlackList.json")
         actions = when {
             whiteList.exists() -> {
                 val list: List<String> = Json.decodeFromString(whiteList.readText())
-                IntentionManagerImpl().availableIntentionActions.filter { it.familyName in list }
-                    .toTypedArray() // TODO check difference with IntentionManagerImpl.getInstance()
+                IntentionManagerImpl().availableIntentions.filter { it.familyName in list } // TODO check difference with IntentionManagerImpl.getInstance()
             }
             blackList.exists() -> {
                 val list: List<String> = Json.decodeFromString(blackList.readText())
-                IntentionManagerImpl().availableIntentionActions.filter { it.familyName !in list }
-                    .toTypedArray()
+                IntentionManagerImpl().availableIntentions.filter { it.familyName !in list }
             }
             else -> {
-                IntentionManagerImpl().availableIntentionActions
+                IntentionManagerImpl().availableIntentions
             }
         }
 
@@ -41,6 +39,7 @@ class CurrentPositionHandler {
         this.editor = editor
         this.file = file
     }
+
     constructor(e: AnActionEvent)  {
         val project = e.getData(PlatformDataKeys.PROJECT)!!
         val editor = e.getData(PlatformDataKeys.EDITOR)!! // If cursor isn't placed, editor and file will be null

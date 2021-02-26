@@ -20,6 +20,9 @@
         <metricsExtensionPoint implementation="metrics.NestingDepthMetric"/>
         <metricsExtensionPoint implementation="metrics.NumberOfLineBreaksInsideExpression"/>
         <metricsExtensionPoint implementation="metrics.MaxLineLengthInsideExpression"/>
+        <metricsExtensionPoint implementation="metrics.NumberOfEmptyLinesMetric"/>
+        <metricsExtensionPoint implementation="metrics.IndentationsNumber"/>
+        <metricsExtensionPoint implementation="metrics.NumberOfLines"/>
     </extensions>
 
 <!--    <extensions defaultExtensionNs="com.intellij">-->
