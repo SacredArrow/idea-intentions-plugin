@@ -83,6 +83,8 @@ java {
     res.srcDir("/home/custos/Projects/IdeaProjects/usableIntentionsPlugin/src/main/resources/")
 }
 
+
+
 tasks {
     // Set the compatibility versions to 1.8
     withType<JavaCompile> {
@@ -94,6 +96,8 @@ tasks {
             kotlinOptions.jvmTarget = "1.8"
         }
     }
+
+    runIde { maxHeapSize = "6g" }
 
     withType<Detekt> {
         jvmTarget = "1.8"

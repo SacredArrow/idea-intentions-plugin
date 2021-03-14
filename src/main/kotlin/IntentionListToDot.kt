@@ -1,7 +1,7 @@
 import java.io.File
 
 class IntentionListToDot {
-    private val hashes = HashSet<Int>()
+    private val hashes = mutableSetOf<Int>()
 
     fun process(events: List<IntentionEvent>, parentFilename: String, filename: String): Boolean {
         if (events.isEmpty()) return false

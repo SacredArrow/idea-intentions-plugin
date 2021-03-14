@@ -83,7 +83,7 @@ class SequentialApplier(handler: CurrentPositionHandler) {
 //        return Pair(minOf(onLine + 1, GlobalStorage.linesAround), code)
     }
 
-    fun start(depth: Int = 0, max_depth: Int = 20): Boolean {
+    fun start(depth: Int = 0, max_depth: Int = 5): Boolean {
         if (depth > max_depth) return false
         val actions = handler.getIntentionsList(true)
 

@@ -1,6 +1,6 @@
 object GlobalStorage {
     val linesAround = 5
-    val samplesForEachPath = 150
+    val samplesForEachPath = 80
     var out_path: String? = null //TODO remove all paths later since it is only for development
     val usedIntentions = mutableSetOf<String>()
 
