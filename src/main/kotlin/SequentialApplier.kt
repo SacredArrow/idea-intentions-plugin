@@ -2,12 +2,16 @@ import GlobalStorage.out_path
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.PsiFileFactoryImpl
 import kotlinx.serialization.*
 import java.io.File
@@ -30,30 +34,28 @@ data class CodePiece(
     val fullCode: String
 )
 
-class SequentialApplier(handler: CurrentPositionHandler) {
-    private val handler : CurrentPositionHandler
+class SequentialApplier(private val handler: CurrentPositionHandler) {
     var events = mutableListOf<IntentionEvent>()
     private var hashes = mutableMapOf<Int, CodePiece>()
-//    private val document = handler.editor.document // Is it okay to put it here?
-    private val document : Document
+    private val document = handler.editor.document // Is it okay to put it here?
     private val docManager = PsiDocumentManager.getInstance(handler.project)
-    private val caret : CaretModel
+    private val caret = handler.editor.caretModel
     private var setOfSemanticsChangingIntentions: Set<String> = emptySet() // TODO Should it be moved outside of the class?
-    private val startingOffset : Int
+    private val startingOffset = caret.offset
 
     init {
         val file = this::class.java.classLoader.getResource("badIntentions.json")
         setOfSemanticsChangingIntentions = Json.decodeFromString(file.readText())
-        val psiFile = PsiFileFactoryImpl(handler.project).createFileFromText("dumb.java", JavaFileType.INSTANCE, handler.file.text) // Make dumb file so the original is not changed
-        this.document = psiFile.viewProvider.document!!
-        var editor: Editor? = null
-        WriteCommandAction.runWriteCommandAction(handler.project) {
-            editor = EditorFactory.getInstance().createEditor(this.document) // Must be invoked in EDT?
-        }
-        this.caret = editor!!.caretModel
-        this.caret.moveToOffset(handler.editor.caretModel.offset)
-        this.handler = CurrentPositionHandler(handler.project, editor!!, psiFile)
-        this.startingOffset = caret.offset
+//        val psiFile = PsiFileFactory.getInstance(handler.project).createFileFromText(JavaLanguage.INSTANCE, handler.file.text) // Make dumb file so the original is not changed
+//        this.document = docManager.getDocument(psiFile)!!
+//        this.document = handler.editor.document
+////        val editor = EditorFactory.getInstance().createEditor(this.document, handler.project, JavaFileType.INSTANCE, false) // Must be invoked in EDT?
+//        val editor = handler.editor
+//        this.caret = editor!!.caretModel
+//        this.caret.moveToOffset(handler.editor.caretModel.offset)
+////        this.handler = CurrentPositionHandler(handler.project, editor, psiFile)
+//        this.handler = handler
+//        this.startingOffset = caret.offset
 
     }
 
@@ -155,6 +157,9 @@ class SequentialApplier(handler: CurrentPositionHandler) {
             } // Replace code with old one
             caret.moveToOffset(oldState.offset)
         }
+//        if (depth == 0) {
+//            EditorFactory.getInstance().releaseEditor(handler.editor)
+//        }
         return shouldBeContinued
 
     }

@@ -1,3 +1,5 @@
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 
@@ -13,6 +15,9 @@ class FileApplier(private val handler: CurrentPositionHandler) {
             override fun visitElement(element: PsiElement) {
                 println(element)
                 val offset = element.textOffset
+                if (offset == 5267) {
+                    println("BP")
+                }
                 if (offset != 0 && offset !in usedPositions) {
                     usedPositions.add(offset) // Consider each position only once
                     println(offset)

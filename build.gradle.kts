@@ -97,7 +97,7 @@ tasks {
         }
     }
 
-    runIde { maxHeapSize = "6g" }
+    runIde { maxHeapSize = "4g" }
 
     withType<Detekt> {
         jvmTarget = "1.8"

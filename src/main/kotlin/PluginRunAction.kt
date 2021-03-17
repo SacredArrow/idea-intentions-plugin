@@ -11,7 +11,7 @@ class PluginRunAction : AnAction() {
 //        val element2 : PsiElement? = file?.findElementAt(editor.caretModel.offset)
 //        println(element2)
 
-//        PopUpForm().initialize(e)
+        PopUpForm().initialize(e)
 
 
     }
