@@ -23,13 +23,14 @@ class FileApplier(private val handler: CurrentPositionHandler) {
                     println(offset)
                     handler.editor.caretModel.moveToOffset(offset)
                     val applier = SequentialApplier(handler) // Copy file to get rid of hash set with Actions
-                    if (applier.start()) {
-                        var fileName = "$offset - $element"
-                        fileName = GlobalStorage.cleanFileName(fileName)
-                        if (dotPrinter.process(applier.events, currentFilename, fileName)) {
-                            applier.dumpHashMap(currentFilename, handler.file.virtualFile.path, fileName)
-                        }
+//                    if (applier.start()) { // Was it necessary for something?
+                    applier.start()
+                    var fileName = "$offset - $element"
+                    fileName = GlobalStorage.cleanFileName(fileName)
+                    if (dotPrinter.process(applier.events, currentFilename, fileName)) {
+                        applier.dumpHashMap(currentFilename, handler.file.virtualFile.path, fileName)
                     }
+
                 }
                 super.visitElement(element)
             }

@@ -69,6 +69,13 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
         }
     }
 
+    fun returnToOldState(state: CodeState) {
+        runWriteCommandAndCommit {
+            document.setText(state.code)
+        } // Replace code with old one
+        caret.moveToOffset(state.offset)
+    }
+
     private fun getLinesAroundOffset(text: String, offset: Int) : CodePiece {
         val onLine = text.take(offset + 1).lines().size
         val lines = text.lines()
@@ -85,12 +92,11 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
 //        return Pair(minOf(onLine + 1, GlobalStorage.linesAround), code)
     }
 
-    fun start(depth: Int = 0, max_depth: Int = 5): Boolean {
-        if (depth > max_depth) return false
+    fun start(depth: Int = 0, max_depth: Int = 5){
+        if (depth > max_depth) return
         val actions = handler.getIntentionsList(true)
 
         val oldState = CodeState(document.text, caret.offset)
-        var shouldBeContinued = true
 
         for (intention in actions) {
             val actionName = intention.familyName
@@ -149,18 +155,13 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
 
             if (event.hash_end !in hashes.keys) {
                 hashes[event.hash_end] = getLinesAroundOffset(newCode, startingOffset)
-                shouldBeContinued = start(depth + 1, max_depth)
-                if (!shouldBeContinued) break
+                start(depth + 1, max_depth)
             }
-            runWriteCommandAndCommit {
-                document.setText(oldState.code)
-            } // Replace code with old one
-            caret.moveToOffset(oldState.offset)
+            returnToOldState(oldState)
         }
 //        if (depth == 0) {
 //            EditorFactory.getInstance().releaseEditor(handler.editor)
 //        }
-        return shouldBeContinued
 
     }
 

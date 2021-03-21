@@ -48,10 +48,10 @@ public class PopUpForm extends JFrame {
         applySequenceButton.addActionListener(event -> { // Better not use this since it is old
             SequentialApplier applier = new SequentialApplier(handler);
 
-            if (applier.start(0, 20)) { // Build intentions tree
-                applier.dumpHashMap("noname", "", "out");
-                new IntentionListToDot().process(applier.getEvents(), "noname", "out");
-            }
+//            if (applier.start(0, 20)) { // Build intentions tree
+            applier.start(0,20);
+            applier.dumpHashMap("noname", "", "out");
+            new IntentionListToDot().process(applier.getEvents(), "noname", "out");
         });
 
         // For each processed file creates csv with number of nodes in tree
