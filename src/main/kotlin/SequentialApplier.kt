@@ -3,14 +3,19 @@ import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.PsiFileFactoryImpl
 import kotlinx.serialization.*
@@ -34,28 +39,46 @@ data class CodePiece(
     val fullCode: String
 )
 
-class SequentialApplier(private val handler: CurrentPositionHandler) {
+class SequentialApplier(handler: CurrentPositionHandler) {
     var events = mutableListOf<IntentionEvent>()
+    private val handler: CurrentPositionHandler
     private var hashes = mutableMapOf<Int, CodePiece>()
-    private val document = handler.editor.document // Is it okay to put it here?
+    private lateinit var  document : Document
     private val docManager = PsiDocumentManager.getInstance(handler.project)
-    private val caret = handler.editor.caretModel
+    private val caret :CaretModel
     private var setOfSemanticsChangingIntentions: Set<String> = emptySet() // TODO Should it be moved outside of the class?
-    private val startingOffset = caret.offset
+    private val startingOffset : Int
 
     init {
         val file = this::class.java.classLoader.getResource("badIntentions.json")
         setOfSemanticsChangingIntentions = Json.decodeFromString(file.readText())
-//        val psiFile = PsiFileFactory.getInstance(handler.project).createFileFromText(JavaLanguage.INSTANCE, handler.file.text) // Make dumb file so the original is not changed
-//        this.document = docManager.getDocument(psiFile)!!
-//        this.document = handler.editor.document
-////        val editor = EditorFactory.getInstance().createEditor(this.document, handler.project, JavaFileType.INSTANCE, false) // Must be invoked in EDT?
-//        val editor = handler.editor
-//        this.caret = editor!!.caretModel
-//        this.caret.moveToOffset(handler.editor.caretModel.offset)
-////        this.handler = CurrentPositionHandler(handler.project, editor, psiFile)
-//        this.handler = handler
-//        this.startingOffset = caret.offset
+        lateinit var psiFile: PsiFile
+        ApplicationManager.getApplication().runReadAction {
+            psiFile = PsiFileFactory.getInstance(handler.project).createFileFromText(
+                JavaLanguage.INSTANCE,
+                handler.file.text
+            ) // Make dumb file so the original is not changed
+        }
+        ApplicationManager.getApplication().runReadAction {
+            document = docManager.getDocument(psiFile)!!
+        }
+        lateinit var editor : Editor
+        ApplicationManager.getApplication().invokeAndWait {
+            editor = EditorFactory.getInstance()
+            .createEditor(this.document, handler.project, JavaFileType.INSTANCE, false) // Must be invoked in EDT?
+        }
+//        val editor = FileEditorManager.getInstance(handler.project).openTextEditor(OpenFileDescriptor(handler.project, psiFile.virtualFile, 0), true)
+        val tmp = FileEditorManager.getInstance(handler.project).selectedEditor
+        this.caret = editor!!.caretModel
+        var position = 0
+        ApplicationManager.getApplication().runReadAction {
+            position = handler.editor.caretModel.offset
+        }
+        ApplicationManager.getApplication().invokeAndWait {
+            this.caret.moveToOffset(position)
+        }
+        this.handler = CurrentPositionHandler(handler.project, editor, psiFile)
+        this.startingOffset = position
 
     }
 
@@ -72,8 +95,9 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
     fun returnToOldState(state: CodeState) {
         runWriteCommandAndCommit {
             document.setText(state.code)
+            caret.moveToOffset(state.offset)
         } // Replace code with old one
-        caret.moveToOffset(state.offset)
+
     }
 
     private fun getLinesAroundOffset(text: String, offset: Int) : CodePiece {
@@ -89,14 +113,16 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
             endOffset += lines[i].length + 1
         }
         return CodePiece(-1, code, minOf(onLine + 1, GlobalStorage.linesAround), startOffset, endOffset - 1, offset, "", text)
-//        return Pair(minOf(onLine + 1, GlobalStorage.linesAround), code)
     }
 
     fun start(depth: Int = 0, max_depth: Int = 5){
         if (depth > max_depth) return
         val actions = handler.getIntentionsList(true)
 
-        val oldState = CodeState(document.text, caret.offset)
+        lateinit var oldState : CodeState
+        ApplicationManager.getApplication().runReadAction {
+            oldState = CodeState(document.text, caret.offset)
+        }
 
         for (intention in actions) {
             val actionName = intention.familyName
@@ -144,6 +170,14 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
                     throw(e)
                 }
             }
+//            } catch (e: Throwable) {
+//                if ("Wrong end" in e.message!!) {
+//                    println("FIX ME offsets error")
+//                    continue
+//                } else {
+//                    throw(e)
+//                }
+//            }
             val newCode = document.text
             val event = IntentionEvent(actionName, oldState.code.hashCode(), newCode.hashCode())
             events.add(event)
@@ -159,9 +193,13 @@ class SequentialApplier(private val handler: CurrentPositionHandler) {
             }
             returnToOldState(oldState)
         }
-//        if (depth == 0) {
-//            EditorFactory.getInstance().releaseEditor(handler.editor)
-//        }
+        if (depth == 0) {
+            ApplicationManager.getApplication().invokeAndWait {
+                EditorFactory.getInstance().releaseEditor(handler.editor)
+            }
+//            FileEditorManager.getInstance(handler.project).closeFile(docManager.getPsiFile(document)!!.virtualFile)
+//            println("Closed")
+        }
 
     }
 

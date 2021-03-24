@@ -3,6 +3,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -11,6 +12,9 @@ import kotlinx.serialization.json.Json
 import java.io.File
 
 class CurrentPositionHandler {
+    companion object {
+        val manager = IntentionManagerImpl()
+    }
     val project: Project
     val editor: Editor
     val file: PsiFile
@@ -21,14 +25,14 @@ class CurrentPositionHandler {
         actions = when {
             whiteList.exists() -> {
                 val list: List<String> = Json.decodeFromString(whiteList.readText())
-                IntentionManagerImpl().availableIntentions.filter { it.familyName in list } // TODO check difference with IntentionManagerImpl.getInstance()
+                manager.availableIntentions.filter { it.familyName in list } // TODO check difference with IntentionManagerImpl.getInstance()
             }
             blackList.exists() -> {
                 val list: List<String> = Json.decodeFromString(blackList.readText())
-                IntentionManagerImpl().availableIntentions.filter { it.familyName !in list }
+                manager.availableIntentions.filter { it.familyName !in list }
             }
             else -> {
-                IntentionManagerImpl().availableIntentions
+                manager.availableIntentions
             }
         }
 
@@ -50,7 +54,9 @@ class CurrentPositionHandler {
     }
 
     private fun checkIntention(intention: IntentionAction) : Boolean {
-        return intention.isAvailable(project, editor, file)
+        var isAvailable: Boolean = false
+        ApplicationManager.getApplication().runReadAction { isAvailable = intention.isAvailable(project, editor, file) }
+        return isAvailable
     }
 
     fun getIntentionsList(onlyAvailable: Boolean): List<IntentionAction> {

@@ -1,4 +1,6 @@
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.DumbService
@@ -7,6 +9,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import java.io.File
 import kotlin.concurrent.thread
@@ -21,9 +24,9 @@ class PathApplier(private val handler: CurrentPositionHandler) {
                 File("${GlobalStorage.out_path}/maps").deleteRecursively()
                 val files = file.readLines()
 //                project = ProjectManager.getInstance().loadAndOpenProject(files.first())!! // This line opens project, but it is bugged
-                DumbService.getInstance(project).smartInvokeLater {
-                    files.drop(1).forEach { startForFile(it) } // File with paths in it
-                }
+//                DumbService.getInstance(project).smartInvokeLater {
+                files.drop(1).forEach { startForFile(it) } // File with paths in it
+//                }
             } else {
                 startForFile(path)
             }
@@ -38,11 +41,17 @@ class PathApplier(private val handler: CurrentPositionHandler) {
     }
     private fun startForFile(path: String) {
         val virtualFile = VirtualFileManager.getInstance().findFileByUrl("file://$path")!!
-        val file = PsiManager.getInstance(project).findFile(virtualFile)!!
+        lateinit var file : PsiFile
+        ApplicationManager.getApplication().runReadAction {
+            file = PsiManager.getInstance(project).findFile(virtualFile)!!
+        }
         println(file)
-        val document = PsiDocumentManager.getInstance(project).getDocument(file)
-        var editor: Editor? = null
-        WriteCommandAction.runWriteCommandAction(project) {
+        lateinit var document : Document
+        ApplicationManager.getApplication().runReadAction {
+            document = PsiDocumentManager.getInstance(project).getDocument(file)!!
+        }
+        lateinit var editor : Editor
+        ApplicationManager.getApplication().invokeAndWait {
             editor = EditorFactory.getInstance().createEditor(document!!) // Must be invoked in EDT?
         }
         println(editor)
@@ -50,6 +59,9 @@ class PathApplier(private val handler: CurrentPositionHandler) {
         val handler = CurrentPositionHandler(project, editor!!, file)
         val applier = FileApplier(handler)
         applier.start()
+        ApplicationManager.getApplication().invokeAndWait {
+            EditorFactory.getInstance().releaseEditor(editor)
+        }
 
     }
 }
