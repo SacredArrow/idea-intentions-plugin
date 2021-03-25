@@ -142,7 +142,9 @@ class SequentialApplier(handler: CurrentPositionHandler) {
             // This is useful only when editor is displayed. Otherwise it can't see that popup is active (and it isn't called before it)
             if (IdeEventQueue.getInstance().isPopupActive) {
                 println("Skipping ${intention.familyName} because it needs popup")
-                IdeEventQueue.getInstance().popupManager.closeAllPopups()
+                ApplicationManager.getApplication().invokeAndWait {
+                    IdeEventQueue.getInstance().popupManager.closeAllPopups()
+                }
                 continue
             }
 
