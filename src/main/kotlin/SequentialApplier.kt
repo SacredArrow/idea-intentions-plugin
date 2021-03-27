@@ -50,8 +50,6 @@ class SequentialApplier(handler: CurrentPositionHandler) {
     private val startingOffset : Int
 
     init {
-        val file = this::class.java.classLoader.getResource("badIntentions.json")
-        setOfSemanticsChangingIntentions = Json.decodeFromString(file.readText())
         lateinit var psiFile: PsiFile
         ApplicationManager.getApplication().runReadAction {
             psiFile = PsiFileFactory.getInstance(handler.project).createFileFromText(
@@ -67,9 +65,8 @@ class SequentialApplier(handler: CurrentPositionHandler) {
             editor = EditorFactory.getInstance()
             .createEditor(this.document, handler.project, JavaFileType.INSTANCE, false) // Must be invoked in EDT?
         }
-//        val editor = FileEditorManager.getInstance(handler.project).openTextEditor(OpenFileDescriptor(handler.project, psiFile.virtualFile, 0), true)
-        val tmp = FileEditorManager.getInstance(handler.project).selectedEditor
-        this.caret = editor!!.caretModel
+
+        this.caret = editor.caretModel
         var position = 0
         ApplicationManager.getApplication().runReadAction {
             position = handler.editor.caretModel.offset
@@ -148,17 +145,6 @@ class SequentialApplier(handler: CurrentPositionHandler) {
                 continue
             }
 
-            /*
-            This also drops "Replace with block comment" (otherwise
-            it becomes endless loop of adding spaces in the end),
-             "Cast expression" (endless loop with "Create Local Var from instanceof Usage"),
-             "Break string on '\n'"(loop)
-             */
-            if (setOfSemanticsChangingIntentions.contains(actionName)) {
-                println("Skipping ${intention.familyName} because it is in the list")
-                continue
-            }
-//            println(actionName)
             try {
                 runWriteCommandAndCommit {
                     intention.isAvailable(handler.project, handler.editor, handler.file)
@@ -197,7 +183,9 @@ class SequentialApplier(handler: CurrentPositionHandler) {
         }
         if (depth == 0) {
             ApplicationManager.getApplication().invokeAndWait {
-                EditorFactory.getInstance().releaseEditor(handler.editor)
+                WriteCommandAction.runWriteCommandAction(handler.project) {
+                    EditorFactory.getInstance().releaseEditor(handler.editor)
+                }
             }
 //            FileEditorManager.getInstance(handler.project).closeFile(docManager.getPsiFile(document)!!.virtualFile)
 //            println("Closed")

@@ -1,4 +1,5 @@
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.psi.PsiElement
@@ -30,6 +31,7 @@ class FileApplier(private val handler: CurrentPositionHandler) {
             }
         })
         for ((offset, name) in offsetDict) {
+            ProgressManager.getInstance().progressIndicator.checkCanceled()
             println(offset)
             ApplicationManager.getApplication().invokeAndWait {
                 handler.editor.caretModel.moveToOffset(offset)

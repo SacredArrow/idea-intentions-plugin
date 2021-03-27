@@ -14,15 +14,10 @@ import java.io.File
 class CurrentPositionHandler {
     companion object {
         val manager = IntentionManagerImpl()
-    }
-    val project: Project
-    val editor: Editor
-    val file: PsiFile
-    private var actions: List<IntentionAction>
-    init {
+
         val whiteList = File("${GlobalStorage.out_path}/intentionJsons/intentionsWhiteList.json")
         val blackList = File("${GlobalStorage.out_path}/intentionJsons/intentionsBlackList.json")
-        actions = when {
+        private var actions: List<IntentionAction> = when {
             whiteList.exists() -> {
                 val list: List<String> = Json.decodeFromString(whiteList.readText())
                 manager.availableIntentions.filter { it.familyName in list } // TODO check difference with IntentionManagerImpl.getInstance()
@@ -35,8 +30,10 @@ class CurrentPositionHandler {
                 manager.availableIntentions
             }
         }
-
     }
+    val project: Project
+    val editor: Editor
+    val file: PsiFile
 
     constructor(project: Project, editor: Editor, file: PsiFile) {
         this.project = project

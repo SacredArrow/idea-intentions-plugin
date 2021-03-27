@@ -3,6 +3,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.ProjectManager
@@ -18,6 +19,7 @@ class PathApplier(private val handler: CurrentPositionHandler) {
     private var project = handler.project;
     fun start(path: String) {
         val file = File(path)
+        var cnt = 0
         if (file.isFile) {
             if (file.extension == "sample") {
                 File("${GlobalStorage.out_path}/dots").deleteRecursively()
@@ -25,7 +27,13 @@ class PathApplier(private val handler: CurrentPositionHandler) {
                 val files = file.readLines()
 //                project = ProjectManager.getInstance().loadAndOpenProject(files.first())!! // This line opens project, but it is bugged
 //                DumbService.getInstance(project).smartInvokeLater {
-                files.drop(1).forEach { startForFile(it) } // File with paths in it
+                files.drop(1).forEach {
+                    cnt += 1
+                    val indicator = ProgressManager.getInstance().progressIndicator;
+                    indicator.fraction = cnt.toDouble() / files.size
+                    indicator.text = "File $cnt from ${files.size}"
+                    startForFile(it)
+                } // File with paths in it
 //                }
             } else {
                 startForFile(path)
@@ -52,11 +60,11 @@ class PathApplier(private val handler: CurrentPositionHandler) {
         }
         lateinit var editor : Editor
         ApplicationManager.getApplication().invokeAndWait {
-            editor = EditorFactory.getInstance().createEditor(document!!) // Must be invoked in EDT?
+            editor = EditorFactory.getInstance().createEditor(document) // Must be invoked in EDT?
         }
         println(editor)
         println(document)
-        val handler = CurrentPositionHandler(project, editor!!, file)
+        val handler = CurrentPositionHandler(project, editor, file)
         val applier = FileApplier(handler)
         applier.start()
         ApplicationManager.getApplication().invokeAndWait {

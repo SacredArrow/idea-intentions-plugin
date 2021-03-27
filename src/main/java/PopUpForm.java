@@ -65,16 +65,13 @@ public class PopUpForm extends JFrame {
 
                     // Set the progress bar percentage and text
                     progressIndicator.setIndeterminate(false);
-                    progressIndicator.setFraction(0.10);
-                    progressIndicator.setText("90% to finish");
+                    progressIndicator.setText("Start");
 
 
                     // 50% done
                     PathApplier applier = new PathApplier(handler);
                     String path = textField.getText();
                     applier.start(path);
-                    progressIndicator.setFraction(0.50);
-                    progressIndicator.setText("50% to finish");
 
 
                     // Finished
