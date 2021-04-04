@@ -86,7 +86,7 @@ public class PopUpForm extends JFrame {
             SequentialApplier applier = new SequentialApplier(handler);
 
 //            if (applier.start(0, 20)) { // Build intentions tree
-            applier.start(0,20);
+            applier.start(0,20, null);
             applier.dumpHashMap("noname", "", "out");
             new IntentionListToDot().process(applier.getEvents(), "noname", "out");
         });
@@ -135,7 +135,7 @@ public class PopUpForm extends JFrame {
 
                     // 50% done
                     SequentialApplier applier = new SequentialApplier(handler);
-                    applier.start(0, 5);
+                    applier.start(0, 5, null);
                     progressIndicator.setFraction(0.50);
                     progressIndicator.setText("50% to finish");
 

@@ -21,6 +21,7 @@ import com.intellij.psi.impl.PsiFileFactoryImpl
 import kotlinx.serialization.*
 import java.io.File
 import kotlinx.serialization.json.Json
+import java.util.concurrent.BlockingQueue
 
 data class CodeState(val code: String, val offset: Int)
 
@@ -112,7 +113,7 @@ class SequentialApplier(handler: CurrentPositionHandler) {
         return CodePiece(-1, code, minOf(onLine + 1, GlobalStorage.linesAround), startOffset, endOffset - 1, offset, "", text)
     }
 
-    fun start(depth: Int = 0, max_depth: Int = 5){
+    fun start(depth: Int = 0, max_depth: Int = 5, queue: BlockingQueue<IntentionEvent>? = null){
         if (depth > max_depth) return
         val actions = handler.getIntentionsList(true)
 
@@ -158,14 +159,6 @@ class SequentialApplier(handler: CurrentPositionHandler) {
                     throw(e)
                 }
             }
-//            } catch (e: Throwable) {
-//                if ("Wrong end" in e.message!!) {
-//                    println("FIX ME offsets error")
-//                    continue
-//                } else {
-//                    throw(e)
-//                }
-//            }
             val newCode = document.text
             val event = IntentionEvent(actionName, oldState.code.hashCode(), newCode.hashCode())
             events.add(event)
@@ -177,7 +170,12 @@ class SequentialApplier(handler: CurrentPositionHandler) {
 
             if (event.hash_end !in hashes.keys) {
                 hashes[event.hash_end] = getLinesAroundOffset(newCode, startingOffset)
-                start(depth + 1, max_depth)
+                if (queue != null) {
+                    println(hashes.keys)
+                    queue.put(event) // Only put it in queue if there was new codepiece created
+                    println("Event put in queue")
+                }
+                start(depth + 1, max_depth, queue)
             }
             returnToOldState(oldState)
         }
@@ -217,6 +215,17 @@ class SequentialApplier(handler: CurrentPositionHandler) {
             codePieces.add(it.value)
         }
         return codePieces
+    }
+
+    fun getCodePieceFromEvent(event: IntentionEvent, getStart : Boolean = false) : CodePiece? {
+        hashes.forEach {
+            if ((it.key == event.hash_end && !getStart) || (it.key == event.hash_start && getStart)) {
+                it.value.hash = it.key
+                it.value.path = "*Skipped value*"
+                return it.value
+            }
+        }
+        return null
     }
 
 
