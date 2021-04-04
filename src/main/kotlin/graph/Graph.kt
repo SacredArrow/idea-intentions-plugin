@@ -58,6 +58,13 @@ class Graph {
         }
     }
 
+    fun addEvent(event: IntentionEvent) { // Maybe bfs without full graph will not give shortest path, but we can't do anything about it
+        addVertex(event.hash_start, event.hash_end, event.name)
+        for (hash in nodes.keys) {
+            visited[hash] = false
+        }
+    }
+
 // Here might be a bug with -1 in pathIndex
     fun bfs(loadPathIdsFromFile: Boolean = false) {
         if (loadPathIdsFromFile) {

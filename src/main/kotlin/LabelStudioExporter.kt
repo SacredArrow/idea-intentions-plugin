@@ -6,7 +6,7 @@ import kotlinx.serialization.json.Json
 import java.io.File
 
 @Serializable
-class LabelStudioData(val first: String, val second: String, val ref_id: Int)
+class LabelStudioData(val first: String, val second: String, val ref_id: Int, val pathId : Int)
 
 @Serializable
 class LabelStudioInputElement(val data: LabelStudioData) // For some reason library doesn't allow creation of data inside of constructor
@@ -45,7 +45,7 @@ object LabelStudioExporter {
                             addPrimers(
                                 originalVariant.code,
                                 originalVariant.intentionLine
-                            ), addPrimers(codePiece.code, codePiece.intentionLine), id
+                            ), addPrimers(codePiece.code, codePiece.intentionLine), id, pathId
                         )
                     )
                     // Tab replacement just in case of their presence in file name
@@ -65,9 +65,64 @@ object LabelStudioExporter {
             println("$key ${value.size} ${Graph.Mappings.indexToPathMapping[key]}")
             elements.addAll(value.shuffled().take(GlobalStorage.samplesForEachPath))
         }
-        File("${GlobalStorage.out_path}/labelStudioFiles/sample.json").writeText(Json{prettyPrint = true}.encodeToString(elements))
-        File("${GlobalStorage.out_path}/labelStudioFiles/pathIndexToPath.json").writeText(Json{prettyPrint = true}.encodeToString(Graph.Mappings.indexToPathMapping))
-        print(elements.size)
+        val nGroups = 1
+        if (nGroups == 1) {
+            File("${GlobalStorage.out_path}/labelStudioFiles/sample.json").writeText(Json {
+                prettyPrint = true
+            }.encodeToString(elements))
+            print(elements.size)
+        } else {
+            divideToNGroups(pathIndexToCode, nGroups)
+        }
+        File("${GlobalStorage.out_path}/labelStudioFiles/pathIndexToPath.json").writeText(Json {
+            prettyPrint = true
+        }.encodeToString(Graph.Mappings.indexToPathMapping))
+    }
+
+    private fun divideToNGroups(elements: MutableMap<Int, MutableList<LabelStudioInputElement>>, nGroups: Int) {
+        val sorted = elements.toList().sortedBy { (_, value) -> value.size }
+        val newList = mutableListOf<Pair<Int, List<LabelStudioInputElement>>>()
+        var sum = 0
+        for (i in sorted.indices) {
+            val subset = sorted[i].second.shuffled().take(GlobalStorage.samplesForEachPath)
+            sum+=subset.size
+            newList.add(Pair(sorted[i].first, subset))
+        }
+        val inEachGroup = sum / nGroups
+        newList.reverse()
+        for (i in 1..nGroups) {
+            var sum = 0
+            val sample = mutableListOf<Pair<Int, List<LabelStudioInputElement>>>()
+            bigLoop@for (i in newList.indices) {
+                if (sum + newList[i].second.size <= inEachGroup) { // Greedy add biggest elements
+                    sum += newList[i].second.size
+                    sample.add(newList[i])
+                } else {
+                    for (j in i until newList.size) { // Find best small element
+                        if (sum + newList[j].second.size <= inEachGroup) {
+                            sum += newList[j].second.size
+                            sample.add(newList[j])
+                            break@bigLoop
+                        }
+                    }
+                }
+            }
+            val result = mutableListOf<LabelStudioInputElement>()
+            println(i)
+            for (pair in sample) {
+                newList.remove(pair)
+                result.addAll(pair.second)
+                println("${pair.first} ${pair.second.size} ${Graph.Mappings.indexToPathMapping[pair.first]}")
+            }
+            if (i == nGroups) {
+                for (el in newList) {
+                    result.addAll(el.second)
+                }
+            }
+            File("${GlobalStorage.out_path}/labelStudioFiles/samples/sample_$i.json").writeText(Json {
+                prettyPrint = true
+            }.encodeToString(result))
+        }
     }
 
     private fun addPrimers(code: String, intentionLine: Int): String { // This is needed to have a selection in Label Studio

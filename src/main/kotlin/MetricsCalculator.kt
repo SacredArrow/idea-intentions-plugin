@@ -1,4 +1,5 @@
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -18,7 +19,11 @@ class MetricsCalculator {
 
     fun calculateForCodePiece(codePiece: CodePiece, extensionPoint: ExtensionPointName<Metric> = epName): MutableMap<String, Float?> {
         // We can't extract it from disk since it can be changed piece, so we create new file
-        val psiFile = PsiFileFactoryImpl(project).createFileFromText("dumb.java", JavaFileType.INSTANCE, codePiece.fullCode)
+        lateinit var psiFile: PsiFile
+        ApplicationManager.getApplication().runReadAction {
+            psiFile = PsiFileFactory.getInstance(project)
+                .createFileFromText("dumb.java", JavaFileType.INSTANCE, codePiece.fullCode)
+        }
         val metrics = mutableMapOf<String, Float?>()
 
         for (extension in extensionPoint.extensionList){

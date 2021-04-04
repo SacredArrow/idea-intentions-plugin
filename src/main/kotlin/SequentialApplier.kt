@@ -2,16 +2,26 @@ import GlobalStorage.out_path
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileSystem
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.impl.PsiFileFactoryImpl
 import kotlinx.serialization.*
 import java.io.File
 import kotlinx.serialization.json.Json
+import java.util.concurrent.BlockingQueue
 
 data class CodeState(val code: String, val offset: Int)
 
@@ -31,29 +41,42 @@ data class CodePiece(
 )
 
 class SequentialApplier(handler: CurrentPositionHandler) {
-    private val handler : CurrentPositionHandler
     var events = mutableListOf<IntentionEvent>()
+    private val handler: CurrentPositionHandler
     private var hashes = mutableMapOf<Int, CodePiece>()
-//    private val document = handler.editor.document // Is it okay to put it here?
-    private val document : Document
+    private lateinit var  document : Document
     private val docManager = PsiDocumentManager.getInstance(handler.project)
-    private val caret : CaretModel
+    private val caret :CaretModel
     private var setOfSemanticsChangingIntentions: Set<String> = emptySet() // TODO Should it be moved outside of the class?
     private val startingOffset : Int
 
     init {
-        val file = this::class.java.classLoader.getResource("badIntentions.json")
-        setOfSemanticsChangingIntentions = Json.decodeFromString(file.readText())
-        val psiFile = PsiFileFactoryImpl(handler.project).createFileFromText("dumb.java", JavaFileType.INSTANCE, handler.file.text) // Make dumb file so the original is not changed
-        this.document = psiFile.viewProvider.document!!
-        var editor: Editor? = null
-        WriteCommandAction.runWriteCommandAction(handler.project) {
-            editor = EditorFactory.getInstance().createEditor(this.document) // Must be invoked in EDT?
+        lateinit var psiFile: PsiFile
+        ApplicationManager.getApplication().runReadAction {
+            psiFile = PsiFileFactory.getInstance(handler.project).createFileFromText(
+                JavaLanguage.INSTANCE,
+                handler.file.text
+            ) // Make dumb file so the original is not changed
         }
-        this.caret = editor!!.caretModel
-        this.caret.moveToOffset(handler.editor.caretModel.offset)
-        this.handler = CurrentPositionHandler(handler.project, editor!!, psiFile)
-        this.startingOffset = caret.offset
+        ApplicationManager.getApplication().runReadAction {
+            document = docManager.getDocument(psiFile)!!
+        }
+        lateinit var editor : Editor
+        ApplicationManager.getApplication().invokeAndWait {
+            editor = EditorFactory.getInstance()
+            .createEditor(this.document, handler.project, JavaFileType.INSTANCE, false) // Must be invoked in EDT?
+        }
+
+        this.caret = editor.caretModel
+        var position = 0
+        ApplicationManager.getApplication().runReadAction {
+            position = handler.editor.caretModel.offset
+        }
+        ApplicationManager.getApplication().invokeAndWait {
+            this.caret.moveToOffset(position)
+        }
+        this.handler = CurrentPositionHandler(handler.project, editor, psiFile)
+        this.startingOffset = position
 
     }
 
@@ -65,6 +88,14 @@ class SequentialApplier(handler: CurrentPositionHandler) {
         WriteCommandAction.runWriteCommandAction(handler.project) { // This WriteAction isn't really necessary?
             docManager.commitDocument(document) // There is difference with commitAllDocuments
         }
+    }
+
+    fun returnToOldState(state: CodeState) {
+        runWriteCommandAndCommit {
+            document.setText(state.code)
+            caret.moveToOffset(state.offset)
+        } // Replace code with old one
+
     }
 
     private fun getLinesAroundOffset(text: String, offset: Int) : CodePiece {
@@ -80,15 +111,16 @@ class SequentialApplier(handler: CurrentPositionHandler) {
             endOffset += lines[i].length + 1
         }
         return CodePiece(-1, code, minOf(onLine + 1, GlobalStorage.linesAround), startOffset, endOffset - 1, offset, "", text)
-//        return Pair(minOf(onLine + 1, GlobalStorage.linesAround), code)
     }
 
-    fun start(depth: Int = 0, max_depth: Int = 5): Boolean {
-        if (depth > max_depth) return false
+    fun start(depth: Int = 0, max_depth: Int = 5, queue: BlockingQueue<IntentionEvent>? = null){
+        if (depth > max_depth) return
         val actions = handler.getIntentionsList(true)
 
-        val oldState = CodeState(document.text, caret.offset)
-        var shouldBeContinued = true
+        lateinit var oldState : CodeState
+        ApplicationManager.getApplication().runReadAction {
+            oldState = CodeState(document.text, caret.offset)
+        }
 
         for (intention in actions) {
             val actionName = intention.familyName
@@ -108,21 +140,12 @@ class SequentialApplier(handler: CurrentPositionHandler) {
             // This is useful only when editor is displayed. Otherwise it can't see that popup is active (and it isn't called before it)
             if (IdeEventQueue.getInstance().isPopupActive) {
                 println("Skipping ${intention.familyName} because it needs popup")
-                IdeEventQueue.getInstance().popupManager.closeAllPopups()
+                ApplicationManager.getApplication().invokeAndWait {
+                    IdeEventQueue.getInstance().popupManager.closeAllPopups()
+                }
                 continue
             }
 
-            /*
-            This also drops "Replace with block comment" (otherwise
-            it becomes endless loop of adding spaces in the end),
-             "Cast expression" (endless loop with "Create Local Var from instanceof Usage"),
-             "Break string on '\n'"(loop)
-             */
-            if (setOfSemanticsChangingIntentions.contains(actionName)) {
-                println("Skipping ${intention.familyName} because it is in the list")
-                continue
-            }
-//            println(actionName)
             try {
                 runWriteCommandAndCommit {
                     intention.isAvailable(handler.project, handler.editor, handler.file)
@@ -147,15 +170,24 @@ class SequentialApplier(handler: CurrentPositionHandler) {
 
             if (event.hash_end !in hashes.keys) {
                 hashes[event.hash_end] = getLinesAroundOffset(newCode, startingOffset)
-                shouldBeContinued = start(depth + 1, max_depth)
-                if (!shouldBeContinued) break
+                if (queue != null) {
+                    println(hashes.keys)
+                    queue.put(event) // Only put it in queue if there was new codepiece created
+                    println("Event put in queue")
+                }
+                start(depth + 1, max_depth, queue)
             }
-            runWriteCommandAndCommit {
-                document.setText(oldState.code)
-            } // Replace code with old one
-            caret.moveToOffset(oldState.offset)
+            returnToOldState(oldState)
         }
-        return shouldBeContinued
+        if (depth == 0) {
+            ApplicationManager.getApplication().invokeAndWait {
+                WriteCommandAction.runWriteCommandAction(handler.project) {
+                    EditorFactory.getInstance().releaseEditor(handler.editor)
+                }
+            }
+//            FileEditorManager.getInstance(handler.project).closeFile(docManager.getPsiFile(document)!!.virtualFile)
+//            println("Closed")
+        }
 
     }
 
@@ -183,6 +215,17 @@ class SequentialApplier(handler: CurrentPositionHandler) {
             codePieces.add(it.value)
         }
         return codePieces
+    }
+
+    fun getCodePieceFromEvent(event: IntentionEvent, getStart : Boolean = false) : CodePiece? {
+        hashes.forEach {
+            if ((it.key == event.hash_end && !getStart) || (it.key == event.hash_start && getStart)) {
+                it.value.hash = it.key
+                it.value.path = "*Skipped value*"
+                return it.value
+            }
+        }
+        return null
     }
 
 
