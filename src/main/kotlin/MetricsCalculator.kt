@@ -38,6 +38,7 @@ class MetricsCalculator {
         for (codePiece in codePieces) {
             println("Next codepiece")
             println(codePiece.offset)
+            println( codePiece.codePieceEnd)
             check(codePiece.fullCode.subSequence(codePiece.codePieceStart, codePiece.codePieceEnd) == codePiece.code)
             val metrics = calculateForCodePiece(codePiece)
             metricsFile.appendText("${codePiece.path}\t${codePiece.hash}\t${codePiece.offset}")

@@ -35,7 +35,7 @@ data class CodePiece(
     val intentionLine: Int,
     val codePieceStart: Int,
     val codePieceEnd: Int,
-    val offset: Int,
+    var offset: Int,
     var path: String,
     val fullCode: String
 )
@@ -110,6 +110,7 @@ class SequentialApplier(handler: CurrentPositionHandler) {
         for (i in startLine until endLine) {
             endOffset += lines[i].length + 1
         }
+        // TODO May be offset should be taken once more (it can be moved somewhere)
         return CodePiece(-1, code, minOf(onLine + 1, GlobalStorage.linesAround), startOffset, endOffset - 1, offset, "", text)
     }
 
