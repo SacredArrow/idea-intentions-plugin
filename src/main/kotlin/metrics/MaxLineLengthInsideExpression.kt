@@ -12,7 +12,7 @@ class MaxLineLengthInsideExpression : Metric {
     override fun calculate(psiFile: PsiFile, codePiece: CodePiece): Float {
         var maxLength = 0
         ApplicationManager.getApplication().runReadAction {
-            val element = psiFile.findElementAt(codePiece.offset)!!
+            val element = psiFile.findElementAt(codePiece.offset)
             var containingCall: PsiCallExpression? = null
 
             containingCall = PsiTreeUtil.getParentOfType(element, PsiCallExpression::class.java)

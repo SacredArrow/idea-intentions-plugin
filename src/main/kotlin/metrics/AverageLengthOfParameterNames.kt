@@ -13,7 +13,7 @@ class AverageLengthOfParameterNames : Metric {
         var result : Float = (-1).toFloat();
         var nParams = 0;
         ApplicationManager.getApplication().runReadAction {
-            val element = psiFile.findElementAt(codePiece.offset)!!
+            val element = psiFile.findElementAt(codePiece.offset)
             val containingCall: PsiCallExpression? = PsiTreeUtil.getParentOfType(element, PsiCallExpression::class.java)
             if (containingCall != null && containingCall.argumentList != null) {
                 for (expression in containingCall.argumentList!!.expressions) {

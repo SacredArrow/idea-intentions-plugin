@@ -12,12 +12,16 @@ import com.intellij.psi.PsiMethod
 class NestingDepthMetric : Metric {
     override val name: String = "Nesting depth"
 
-    override fun calculate(psiFile: PsiFile, codePiece: CodePiece): Float {
-        var result : Float = 0.0f
+    override fun calculate(psiFile: PsiFile, codePiece: CodePiece): Float? {
+        var result : Float? = 0.0f
         ApplicationManager.getApplication().runReadAction {
-            val element = psiFile.findElementAt(codePiece.offset)!!
+            val element = psiFile.findElementAt(codePiece.offset)
             val containingMethod = PsiTreeUtil.getParentOfType(element, PsiMethod::class.java)
-            result = PsiTreeUtil.getDepth(element, containingMethod).toFloat()
+            if (element != null) {
+                result = PsiTreeUtil.getDepth(element, containingMethod).toFloat()
+            } else {
+                result = null
+            }
         }
         return result
     }

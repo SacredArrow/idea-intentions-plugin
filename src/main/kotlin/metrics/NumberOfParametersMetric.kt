@@ -13,7 +13,7 @@ class NumberOfParametersMetric : Metric {
     override fun calculate(psiFile: PsiFile, codePiece: CodePiece): Float? {
         var result: Float? = 0.0f
         ApplicationManager.getApplication().runReadAction {
-            val element = psiFile.findElementAt(codePiece.offset)!!
+            val element = psiFile.findElementAt(codePiece.offset)
             val containingCall: PsiCallExpression? = PsiTreeUtil.getParentOfType(element, PsiCallExpression::class.java)
             result = containingCall?.argumentList?.expressionCount?.toFloat()
         }

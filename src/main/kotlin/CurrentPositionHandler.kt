@@ -44,7 +44,10 @@ class CurrentPositionHandler {
     constructor(e: AnActionEvent)  {
         val project = e.getData(PlatformDataKeys.PROJECT)!!
         val editor = e.getData(PlatformDataKeys.EDITOR)!! // If cursor isn't placed, editor and file will be null
-        val file = e.getData(LangDataKeys.PSI_FILE)!!
+        lateinit var file: PsiFile
+        ApplicationManager.getApplication().runReadAction {
+            file = e.getData(LangDataKeys.PSI_FILE)!!
+        }
         this.project = project
         this.editor = editor
         this.file = file
