@@ -17,7 +17,13 @@ class CurrentPositionHandler {
 
         val whiteList = File("${GlobalStorage.out_path}/intentionJsons/intentionsWhiteList.json")
         val blackList = File("${GlobalStorage.out_path}/intentionJsons/intentionsBlackList.json")
+        val resourceBlackList = this::class.java.classLoader.getResource("intentionsBlackList.json")
         private var actions: List<IntentionAction> = when {
+            resourceBlackList != null -> {
+                val blackList: List<String> = Json.decodeFromString(resourceBlackList.readText())
+                println("resource found")
+                manager.availableIntentions.filter { it.familyName !in blackList }
+            }
             whiteList.exists() -> {
                 val list: List<String> = Json.decodeFromString(whiteList.readText())
                 manager.availableIntentions.filter { it.familyName in list } // TODO check difference with IntentionManagerImpl.getInstance()
